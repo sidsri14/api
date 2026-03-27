@@ -24,6 +24,7 @@ interface Incident {
 
 interface Monitor {
   id: string;
+  name?: string;
   url: string;
   method: string;
   interval: number;
@@ -31,6 +32,7 @@ interface Monitor {
   lastCheckedAt: string | null;
   logs: Log[];
   incidents: Incident[];
+  uptime30d?: number;
 }
 
 const MonitorDetails: React.FC = () => {
@@ -123,10 +125,11 @@ const MonitorDetails: React.FC = () => {
                   monitor.status === 'UP' ? 'bg-emerald-500' : 
                   monitor.status === 'DOWN' ? 'bg-red-500' : 'bg-amber-400'
                 }`}></span>
-              <h1>{monitor.url}</h1>
+              <h1>{monitor.name || monitor.url}</h1>
             </div>
             <div className="flex space-x-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
-              <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-300">{monitor.method}</span>
+              <span className="text-slate-400 font-normal">{monitor.name ? monitor.url : ''}</span>
+              <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{monitor.method}</span>
               <span className="flex items-center"><Clock className="w-4 h-4 mr-1" /> Checks every {monitor.interval}s</span>
             </div>
           </div>
@@ -143,6 +146,12 @@ const MonitorDetails: React.FC = () => {
          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Avg Response (Last 50)</div>
             <div className="text-2xl font-bold text-slate-800 dark:text-white">{avgResponseTime} <span className="text-sm font-medium text-slate-400">ms</span></div>
+         </div>
+         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">30-Day Uptime</div>
+            <div className={`text-2xl font-bold ${monitor.uptime30d !== undefined && monitor.uptime30d >= 99 ? 'text-emerald-600 dark:text-emerald-500' : 'text-amber-500'}`}>
+              {monitor.uptime30d !== undefined ? `${monitor.uptime30d}%` : '100%'}
+            </div>
          </div>
          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
             <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Checks Logged</div>

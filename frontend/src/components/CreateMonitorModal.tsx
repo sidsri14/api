@@ -10,6 +10,7 @@ interface Props {
 }
 
 const CreateMonitorModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
+  const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('GET');
   const [interval, setIntervalVal] = useState('60');
@@ -24,9 +25,15 @@ const CreateMonitorModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
     setLoading(true);
 
     try {
-      const response = await api.post('/monitors', { url, method, interval });
+      const response = await api.post('/monitors', { 
+        name, 
+        url, 
+        method, 
+        interval: Number(interval) 
+      });
       if (response && response.data && response.data.success) {
         toast.success('Monitor created successfully');
+        setName('');
         setUrl('');
         setMethod('GET');
         setIntervalVal('60');
@@ -58,6 +65,18 @@ const CreateMonitorModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{error}</div>}
           
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Friendly Name</label>
+            <input 
+              type="text" 
+              placeholder="e.g. My API Home"
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target URL</label>
             <input 

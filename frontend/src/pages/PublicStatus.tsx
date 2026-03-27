@@ -4,6 +4,7 @@ import { api } from '../api';
 
 interface Monitor {
   id: string;
+  name?: string;
   url: string;
   status: string;
   lastCheckedAt?: string;
@@ -86,7 +87,7 @@ const PublicStatus: React.FC = () => {
             {monitors.map(monitor => (
               <li key={monitor.id} className="p-5 flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="font-bold text-slate-800 dark:text-white">{new URL(monitor.url).hostname}</span>
+                  <span className="font-bold text-slate-800 dark:text-white">{monitor.name || new URL(monitor.url).hostname}</span>
                   <span className="text-xs text-slate-500 mt-1 flex items-center">
                     <Clock className="w-3 h-3 mr-1" /> Last check: {monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : 'Pending'}
                   </span>

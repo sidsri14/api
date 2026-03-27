@@ -19,6 +19,7 @@ interface Monitor {
   lastCheckedAt?: string;
   avgResponseTime?: number;
   responseTimeTrend?: 'up' | 'down' | 'stable';
+  uptime30d?: number;
 }
 
 type SortKey = 'status' | 'url' | 'lastCheckedAt' | 'avgResponseTime';
@@ -140,7 +141,7 @@ const Dashboard: React.FC = () => {
     const q = search.toLowerCase();
     return monitors
       .filter(m => {
-        const matchesSearch = m.url.toLowerCase().includes(q) || m.name?.toLowerCase().includes(q);
+        const matchesSearch = (m.name || m.url).toLowerCase().includes(q);
         const matchesStatus = statusFilter === 'ALL' || m.status === statusFilter;
         return matchesSearch && matchesStatus;
       })
@@ -384,7 +385,7 @@ const Dashboard: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-1.5">
                       <StatusDot status={monitor.status} />
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{monitor.url}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{monitor.name || monitor.url}</p>
                       <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex-shrink-0">
                         {monitor.method}
                       </span>
@@ -406,6 +407,11 @@ const Dashboard: React.FC = () => {
                       </span>
                       {monitor.avgResponseTime !== undefined && (
                         <TrendBadge trend={monitor.responseTimeTrend} value={monitor.avgResponseTime} />
+                      )}
+                      {monitor.uptime30d !== undefined && (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${monitor.uptime30d >= 99 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'}`}>
+                          {monitor.uptime30d}% uptime
+                        </span>
                       )}
                     </div>
                   </div>

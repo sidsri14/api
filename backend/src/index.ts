@@ -94,15 +94,17 @@ app.use('/api/incidents', incidentRoutes);
 // Phase 5: Public Status API
 app.get('/api/public/status', async (req, res) => {
   try {
-    const monitors = await prisma.monitor.findMany({
-      select: {
-        id: true,
-        url: true,
-        status: true,
-        lastCheckedAt: true,
-      }
-    });
-    successResponse(res, monitors, 200);
+    const monitors: any[] = await prisma.$queryRaw`
+      SELECT id, name, url, status, "lastCheckedAt" FROM "Monitor"
+    `;
+    const formatted = monitors.map(m => ({
+      id: m.id,
+      name: m.name || m.url,
+      url: m.url,
+      status: m.status,
+      lastCheckedAt: m.lastCheckedAt
+    }));
+    successResponse(res, formatted, 200);
   } catch (error) {
     errorResponse(res, 'Failed to fetch status', 500);
   }
