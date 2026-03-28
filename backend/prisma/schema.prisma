@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -19,7 +19,7 @@ model User {
 model Project {
   id        String    @id @default(uuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   createdAt DateTime  @default(now())
   monitors  Monitor[]
@@ -28,17 +28,18 @@ model Project {
 model Monitor {
   id            String    @id @default(uuid())
   projectId     String
-  project       Project   @relation(fields: [projectId], references: [id])
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name          String
   url           String
   method        String    @default("GET")
-  interval      Int       @default(60) // in seconds
-  status        String    @default("PENDING") // "UP", "DOWN", "PENDING"
+  interval      Int       @default(60)
+  status        String    @default("PENDING")
   failureCount  Int       @default(0)
   lastCheckedAt DateTime?
   logs          Log[]
   alerts        Alert[]
   incidents     Incident[]
+  maintenanceUntil DateTime?
 }
 
 model Log {
@@ -46,8 +47,8 @@ model Log {
   monitorId    String
   monitor      Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   statusCode   Int?
-  responseTime Int?     // in ms
-  status       String   // "UP" or "DOWN"
+  responseTime Int?     
+  status       String   
   createdAt    DateTime @default(now())
 }
 
@@ -57,6 +58,17 @@ model Alert {
   monitor   Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   type      String   @default("EMAIL")
   sentAt    DateTime @default(now())
+  config    String?  
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String?
+  resourceId String?
+  details   String?  
+  createdAt DateTime @default(now())
 }
 
 model Incident {
@@ -64,7 +76,8 @@ model Incident {
   monitorId    String
   monitor      Monitor   @relation(fields: [monitorId], references: [id], onDelete: Cascade)
   startedAt    DateTime  @default(now())
-  resolvedAt   DateTime?           // null = still OPEN
-  durationSecs Int?                // set on resolution
-  cause        String?             // e.g. "Connection refused", "Timeout"
+  resolvedAt   DateTime?           
+  durationSecs Int?                
+  cause        String?             
+  status       String    @default("INVESTIGATING")
 }

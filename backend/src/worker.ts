@@ -4,6 +4,7 @@ import pLimit from 'p-limit';
 import pino from 'pino';
 import http from 'http';
 import https from 'https';
+import crypto from 'crypto';
 import type { Monitor } from '@prisma/client';
 import { validateUrlForSSRF, createSafeAgent } from './utils/security.js';
 
@@ -15,206 +16,231 @@ const logger = pino({
 });
 
 const CHECK_INTERVAL_MS = 10 * 1000; 
-const limit = pLimit(10); // Phase 3: Bounded concurrency
+const limit = pLimit(15); 
 let isShuttingDown = false;
 let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+let cleanupHandle: ReturnType<typeof setInterval> | null = null;
 
-// Phase 2: TOCTOU-safe fetch using Node http agent that re-validates IP at connect time
-const fetchWithAgent = (url: string, method: string): Promise<{ status: number; ok: boolean }> => {
+/**
+ * Enhanced fetch with Safe Agent and Body Size Limiting (10KB)
+ */
+const fetchWithAgent = (urlStr: string, method: string): Promise<{ status: number; ok: boolean; responseTime: number; location?: string }> => {
+  const startTime = performance.now();
   return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
-    const isHttps = parsed.protocol === 'https:';
-    const agent = createSafeAgent(isHttps ? 'https' : 'http');
-    const lib = isHttps ? https : http;
+    try {
+      const parsed = new URL(urlStr);
+      const isHttps = parsed.protocol === 'https:';
+      const agent = createSafeAgent(isHttps ? 'https' : 'http');
+      const lib = isHttps ? https : http;
 
-    const req = lib.request(
-      { hostname: parsed.hostname, port: parsed.port || (isHttps ? 443 : 80), path: parsed.pathname + parsed.search, method, agent },
-      (res) => {
-        res.resume(); // drain body
-        const status = res.statusCode ?? 0;
-        resolve({ status, ok: status >= 200 && status < 300 });
-      }
-    );
-    req.setTimeout(10000, () => { req.destroy(new Error('Request timeout')); });
-    req.on('error', reject);
-    req.end();
+      const req = lib.request(
+        { 
+          hostname: parsed.hostname, 
+          port: parsed.port || (isHttps ? 443 : 80), 
+          path: parsed.pathname + parsed.search, 
+          method, 
+          agent,
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'AntiGravity-Monitor/1.0',
+            'Accept': '*/*'
+          }
+        },
+        (res) => {
+          const status = res.statusCode ?? 0;
+          const location = res.headers.location;
+
+          // Resource Protection: Limit body size to 10KB
+          let bodySize = 0;
+          res.on('data', (chunk) => {
+            bodySize += chunk.length;
+            if (bodySize > 10240) { // 10KB
+              req.destroy();
+              resolve({ 
+                status, 
+                ok: status >= 200 && status < 300,
+                responseTime: Math.round(performance.now() - startTime),
+                location: status >= 300 && status < 400 ? location : undefined
+              });
+            }
+          });
+
+          res.on('end', () => {
+            resolve({ 
+              status, 
+              ok: status >= 200 && status < 300,
+              responseTime: Math.round(performance.now() - startTime),
+              location: status >= 300 && status < 400 ? location : undefined
+            });
+          });
+        }
+      );
+
+      req.on('timeout', () => { req.destroy(); reject(new Error('Timeout (10s)')); });
+      req.on('error', (err) => reject(err));
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
-// Phase 3: Retry wrapper with exponential backoff
-const fetchWithRetry = async (url: string, method: string, retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fetchWithAgent(url, method);
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+/**
+ * Handle redirects safely with SSRF re-validation at each hop
+ */
+const safeFetchWithRedirects = async (initialUrl: string, method: string) => {
+  let currentUrl = initialUrl;
+  let hops = 0;
+  const maxHops = 5;
+
+  while (hops < maxHops) {
+    // 1. Validate SSRF for current hop
+    const isSafe = await validateUrlForSSRF(currentUrl);
+    if (!isSafe) throw new Error(`SSRF Block: Hop ${hops} target is in forbidden IP range.`);
+
+    const result = await fetchWithAgent(currentUrl, method);
+    
+    // 2. Terminate if not a redirect or no location header
+    if (!result.location) return result;
+
+    // 3. Resolve internal vs external locations
+    const nextUrl = new URL(result.location, currentUrl).toString();
+    currentUrl = nextUrl;
+    hops++;
+    logger.debug(`Following safe redirect ${hops}: ${currentUrl}`);
+  }
+
+  throw new Error(`Too many redirects (Max ${maxHops})`);
+};
+
+const executeCheck = async (monitor: Monitor) => {
+  let statusCode: number | null = null;
+  let responseTime: number | null = null;
+  let status = 'DOWN';
+  let errorMsg: string | null = null;
+
+  try {
+    const result = await safeFetchWithRedirects(monitor.url, monitor.method);
+    statusCode = result.status;
+    responseTime = result.responseTime;
+    status = result.ok ? 'UP' : 'DOWN';
+    if (!result.ok) errorMsg = `HTTP ${statusCode}`;
+  } catch (error) {
+    errorMsg = (error as Error).message;
+    status = 'DOWN';
+    logger.warn(`Check failed for ${monitor.url}: ${errorMsg}`);
+  }
+
+  // Strike Policy & Persistence
+  const previousStatus = monitor.status;
+  const isCurrentlyUp = status === 'UP';
+  const currentFailureCount = (monitor as any).failureCount ?? 0;
+  let nextFailureCount = isCurrentlyUp ? 0 : currentFailureCount + 1;
+  const effectiveStatus = (nextFailureCount >= 3) ? 'DOWN' : (isCurrentlyUp ? 'UP' : previousStatus);
+  const statusChanged = previousStatus !== effectiveStatus;
+
+  try {
+    await prisma.$transaction([
+      prisma.monitor.update({
+        where: { id: monitor.id },
+        data: { status: effectiveStatus, failureCount: nextFailureCount, lastCheckedAt: new Date() }
+      }),
+      prisma.log.create({
+        data: { monitorId: monitor.id, status, statusCode, responseTime }
+      })
+    ]);
+  } catch (err) {
+    logger.error(`Persistence failed: ${(err as Error).message}`);
+  }
+
+  // Alerts & Incidents
+  if (effectiveStatus === 'DOWN' || statusChanged) {
+    await handleIncidentAndAlert(monitor, effectiveStatus, statusChanged, errorMsg, statusCode);
+  }
+};
+
+const handleIncidentAndAlert = async (monitor: Monitor, effectiveStatus: string, statusChanged: boolean, errorMsg: string | null, statusCode: number | null) => {
+  if (effectiveStatus === 'DOWN') {
+    const existing = await prisma.incident.findFirst({ where: { monitorId: monitor.id, resolvedAt: null } });
+    if (!existing) {
+      await prisma.incident.create({ 
+        data: { monitorId: monitor.id, cause: errorMsg || 'Connection error', status: 'INVESTIGATING' } as any 
+      });
+    }
+
+    const cooldown = new Date(Date.now() - 15 * 60 * 1000);
+    const recent = await prisma.alert.findFirst({ where: { monitorId: monitor.id, sentAt: { gte: cooldown } } });
+    if (!recent) {
+      await prisma.alert.create({ data: { monitorId: monitor.id, type: 'EMAIL' } });
+      const project = await prisma.project.findUnique({ where: { id: monitor.projectId }, include: { user: true } });
+      if (project?.user?.email) {
+        sendAlertEmail(project.user.email, monitor.url, 'DOWN', statusCode).catch(() => {});
+      }
+    }
+  } else if (effectiveStatus === 'UP' && statusChanged) {
+    const open = await prisma.incident.findMany({ where: { monitorId: monitor.id, resolvedAt: null } });
+    for (const inc of open) {
+      const resolvedAt = new Date();
+      const durationSecs = Math.floor((resolvedAt.getTime() - inc.startedAt.getTime()) / 1000);
+      await prisma.incident.update({ where: { id: inc.id }, data: { resolvedAt, durationSecs, status: 'RESOLVED' } as any });
     }
   }
-  throw new Error("Unreachable");
+};
+
+const cleanupOldData = async () => {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const logsDeleted = await prisma.log.deleteMany({ where: { createdAt: { lt: thirtyDaysAgo } } });
+    const alertsDeleted = await prisma.alert.deleteMany({ where: { sentAt: { lt: thirtyDaysAgo } } });
+    if (logsDeleted.count > 0 || alertsDeleted.count > 0) {
+      logger.info(`Housekeeping: Purged ${logsDeleted.count} logs and ${alertsDeleted.count} alerts older than 30 days.`);
+    }
+  } catch (error) {
+    logger.error(`Housekeeping failed: ${(error as Error).message}`);
+  }
 };
 
 const checkMonitors = async () => {
   if (isShuttingDown) return;
-  
-  logger.info('Ticking... querying database for due monitors.');
-  
   try {
-    // Phase 3: Query ONLY due monitors using Raw Postgres SQL for massive indexing efficiency
-    const dueMonitors = await prisma.$queryRaw<Monitor[]>`
-      SELECT * FROM "Monitor" 
-      WHERE "lastCheckedAt" IS NULL 
-      OR "lastCheckedAt" + ("interval" * interval '1 second') <= NOW()
-    `;
+    const monitors = await prisma.monitor.findMany({
+      where: {
+        AND: [
+          { OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: new Date(Date.now() - 10 * 1000) } }] },
+          { OR: [{ maintenanceUntil: null }, { maintenanceUntil: { lt: new Date() } }] }
+        ]
+      }
+    });
 
-    if (dueMonitors.length === 0) {
-      logger.debug('No monitors due for checking.');
-    } else {
-      logger.info(`Dispatched ${dueMonitors.length} monitor(s) to concurrent queue.`);
-      
-      // Phase 3: Execute with bounded p-limit
-      await Promise.all(
-        dueMonitors.map(monitor => limit(() => executeCheck(monitor)))
-      );
+    const now = Date.now();
+    const batch = monitors.filter(m => !m.lastCheckedAt || now >= m.lastCheckedAt.getTime() + (m.interval * 1000));
+    
+    if (batch.length > 0) {
+      logger.info(`Tick: Processing ${batch.length} monitors.`);
+      await Promise.all(batch.map(m => limit(() => executeCheck(m))));
     }
   } catch (error) {
-    logger.error({ err: error }, 'Failed to process monitor batch');
+    logger.error(error, "Batch failed.");
   } finally {
-    if (!isShuttingDown) {
-      // Recursive timeout prevents overlapping ticks
-      timeoutHandle = setTimeout(checkMonitors, CHECK_INTERVAL_MS);
-    }
-  }
-};
-
-const executeCheck = async (monitor: Monitor) => {
-  const startTime = performance.now();
-  let statusCode: number | null = null;
-  let status = 'DOWN';
-
-  logger.debug(`[Queue Executing] Checking ${monitor.url} [${monitor.method}]`);
-
-  let errorMsg: string | null = null;
-
-  try {
-    // Phase 5: SSRF Check
-    const isSafe = await validateUrlForSSRF(monitor.url);
-    if (!isSafe) {
-      throw new Error("SSRF Security Violation: Target URL resolves to a forbidden private/local IP range.");
-    }
-
-    const response = await fetchWithRetry(monitor.url, monitor.method);
-    statusCode = response.status;
-    if (response.ok) {
-      status = 'UP';
-    } else {
-      errorMsg = `HTTP Error: ${statusCode}`;
-    }
-  } catch (error) {
-    errorMsg = (error as Error).message;
-    logger.warn(`Monitor ${monitor.url} check failed: ${errorMsg}`);
-    status = 'DOWN';
-  }
-
-  const previousStatus = monitor.status;
-  
-  // Phase 5: Failure Count & Strike Policy (Cooldown)
-  const isCurrentlyUp = status === 'UP';
-  const currentFailureCount = (monitor as any).failureCount ?? 0;
-  let nextFailureCount = isCurrentlyUp ? 0 : currentFailureCount + 1;
-  
-  // Transition to DOWN only after 3 consecutive failures
-  const effectiveStatus = (nextFailureCount >= 3) ? 'DOWN' : (isCurrentlyUp ? 'UP' : previousStatus);
-  const statusChanged = previousStatus !== effectiveStatus;
-  const isEffectivelyDown = effectiveStatus === 'DOWN';
-
-  await prisma.$executeRaw`
-    UPDATE "Monitor" 
-    SET status = ${effectiveStatus}, "failureCount" = ${nextFailureCount}, "lastCheckedAt" = ${new Date()}
-    WHERE id = ${monitor.id}
-  `;
-
-  // Phase 6: Incident Management & Alerting
-  if (isEffectivelyDown || statusChanged) {
-    if (isEffectivelyDown) {
-      // 1. Open new incident if none exists already for this monitor
-      const existingOpen = await prisma.incident.findFirst({
-        where: { monitorId: monitor.id, resolvedAt: null }
-      });
-      
-      if (!existingOpen) {
-        logger.info(`Opening new incident for ${monitor.url}`);
-        await prisma.$executeRaw`
-          INSERT INTO "Incident" (id, "monitorId", cause, "startedAt", status)
-          VALUES (${crypto.randomUUID()}, ${monitor.id}, ${errorMsg || 'Unknown failure'}, ${new Date()}, 'INVESTIGATING')
-        `;
-      }
-
-      // 2. Alert orchestration (Anti-Spam / Flapping Protection)
-      const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
-      const recentAlert = await prisma.alert.findFirst({
-        where: {
-          monitorId: monitor.id,
-          sentAt: { gte: fifteenMinsAgo }
-        }
-      });
-
-      if (!recentAlert) {
-        logger.info(`Triggering active DOWN alert for ${monitor.url}`);
-        await prisma.alert.create({
-          data: { monitorId: monitor.id, type: 'EMAIL' }
-        });
-
-        // Fetch user context for email
-        const projectWithUser = await prisma.project.findUnique({
-          where: { id: monitor.projectId },
-          include: { user: true }
-        });
-
-        if (projectWithUser?.user?.email) {
-          await sendAlertEmail(projectWithUser.user.email, monitor.url, status, statusCode);
-        }
-      } else {
-        logger.info(`Suppressed duplicate DOWN alert for ${monitor.url} (15m Cooldown active)`);
-      }
-    } else if (effectiveStatus === 'UP' && statusChanged) {
-      // Resolve any open incidents
-      const openIncidents: any[] = await prisma.$queryRaw`
-        SELECT id, "startedAt" FROM "Incident" 
-        WHERE "monitorId" = ${monitor.id} AND "resolvedAt" IS NULL
-      `;
-
-      for (const inc of openIncidents) {
-        const resolvedAt = new Date();
-        const startedAt = new Date(inc.startedAt);
-        const durationSecs = Math.floor((resolvedAt.getTime() - startedAt.getTime()) / 1000);
-        
-        await prisma.$executeRaw`
-          UPDATE "Incident" 
-          SET "resolvedAt" = ${resolvedAt}, "durationSecs" = ${durationSecs}, "status" = 'RESOLVED'
-          WHERE id = ${inc.id}
-        `;
-        logger.info(`Resolved incident ${inc.id} for monitor ${monitor.id}`);
-      }
-    }
+    if (!isShuttingDown) timeoutHandle = setTimeout(checkMonitors, CHECK_INTERVAL_MS);
   }
 };
 
 const startWorker = () => {
-  logger.info('Starting Resilient Background Monitor Worker...');
+  logger.info('Reliable Monitor Worker v2.0 - Active');
   checkMonitors();
+  cleanupHandle = setInterval(cleanupOldData, 24 * 60 * 60 * 1000); // Once a day
+  cleanupOldData(); // Initial run
 };
 
 startWorker();
 
-// Phase 3: Graceful Shutdown Hook
 const shutdown = async (signal: string) => {
-  logger.info(`\nReceived ${signal}. Gracefully draining queue and shutting down...`);
+  logger.info(`Shutting down (${signal})...`);
   isShuttingDown = true;
   if (timeoutHandle) clearTimeout(timeoutHandle);
-  
+  if (cleanupHandle) clearInterval(cleanupHandle);
   await prisma.$disconnect();
-  logger.info('Worker disconnected safely. Exiting.');
   process.exit(0);
 };
 

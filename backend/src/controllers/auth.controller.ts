@@ -7,6 +7,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
+  path: '/',
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
 };
 
@@ -45,6 +46,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict' as const,
+    path: '/',
   });
   successResponse(res, { message: 'Logged out successfully' }, 200);
 };

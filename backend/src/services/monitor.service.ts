@@ -1,173 +1,186 @@
 import crypto from 'crypto';
 import { prisma } from '../utils/prisma.js';
 import { validateUrlForSSRF } from '../utils/security.js';
+import { AuditService } from './audit.service.js';
 
 export class MonitorService {
   private static async getDefaultProject(userId: string) {
-    let project = await prisma.project.findFirst({ where: { userId } });
-    if (!project) {
-      project = await prisma.project.create({
-        data: {
-          userId,
-          name: 'Default Project',
-        },
-      });
-    }
-    return project;
+    const project = await prisma.project.findFirst({
+      where: { userId },
+      select: { id: true }
+    });
+    
+    if (project) return project;
+
+    return prisma.project.create({
+      data: { userId, name: 'Default Project' },
+      select: { id: true }
+    });
+  }
+
+  /**
+   * Verified Scoping Wrapper
+   * Ensures the monitor exists AND is owned by the project belonging to the user.
+   */
+  private static async getVerifiedMonitor(userId: string, monitorId: string) {
+    return prisma.monitor.findFirst({
+      where: { 
+        id: monitorId,
+        project: { userId } // Explicit cross-table ownership check
+      },
+      select: { id: true, url: true, projectId: true }
+    });
   }
 
   static async createMonitor(userId: string, data: { name: string; url: string; method: string; interval: number }) {
     const { name, url, method, interval } = data;
 
-    // Phase 5: SSD/SSRF Protection - Block local/private URLs at API level
     const isSafe = await validateUrlForSSRF(url);
     if (!isSafe) {
-      const error = new Error('SSRF Security Violation: Local/Private URLs are not allowed.');
+      const error = new Error('SSRF Security Violation: Local/Private URLs are forbidden.');
       (error as any).status = 403;
       throw error;
     }
 
     const project = await this.getDefaultProject(userId);
 
-    // Phase 4: Enforce Quotas (Max 20 limitation)
-    const count = await prisma.monitor.count({
-      where: { projectId: project.id }
-    });
-
+    const count = await prisma.monitor.count({ where: { projectId: project.id } });
     if (count >= 20) {
-      const error = new Error('You have reached the maximum limit of 20 monitors');
+      const error = new Error('Monitor limit reached (Max 20)');
       (error as any).status = 403;
       throw error;
     }
 
     const monitorId = crypto.randomUUID();
-    await prisma.$executeRaw`
-      INSERT INTO "Monitor" (id, "projectId", "name", url, method, interval, status, "failureCount")
-      VALUES (${monitorId}, ${project.id}, ${name || url}, ${url}, ${method}, ${Number(interval)}, 'UP', 0)
-    `;
+    const monitor = await prisma.monitor.create({
+      data: {
+        id: monitorId,
+        projectId: project.id,
+        name: name || url,
+        url,
+        method,
+        interval: Number(interval),
+        status: 'UP',
+        failureCount: 0
+      }
+    });
 
-    return {
-      id: monitorId,
-      projectId: project.id,
-      name: name || url,
-      url,
-      method,
-      interval: Number(interval),
-      status: 'UP',
-      failureCount: 0,
-    };
+    await AuditService.log(userId, 'CREATE_MONITOR', 'Monitor', monitorId, { url, method });
+    return monitor;
+  }
+
+  static async updateMonitor(userId: string, monitorId: string, data: Partial<{ name: string; url: string; method: string; interval: number; maintenanceUntil: Date | null }>) {
+    const monitor = await this.getVerifiedMonitor(userId, monitorId);
+
+    if (!monitor) {
+      const error = new Error('Monitor not found or access denied');
+      (error as any).status = 404;
+      throw error;
+    }
+
+    if (data.url) {
+      const isSafe = await validateUrlForSSRF(data.url);
+      if (!isSafe) {
+        const error = new Error('SSRF Violation for new URL');
+        (error as any).status = 403;
+        throw error;
+      }
+    }
+
+    const updated = await prisma.monitor.update({
+      where: { id: monitorId },
+      data: {
+        ...data,
+        interval: data.interval ? Number(data.interval) : undefined
+      }
+    });
+
+    await AuditService.log(userId, 'UPDATE_MONITOR', 'Monitor', monitorId, data);
+    return updated;
   }
 
   static async getMonitors(userId: string) {
-    const project = await this.getDefaultProject(userId);
-    const monitors: any[] = await prisma.$queryRaw`
-      SELECT id, "name" AS "name", url, method, interval, status, "failureCount", "projectId", "lastCheckedAt" 
-      FROM "Monitor" 
-      WHERE "projectId" = ${project.id} 
-      ORDER BY id DESC
-    `;
+    // Optimized fetch with explicit user scoping
+    const monitors = await prisma.monitor.findMany({
+      where: { project: { userId } },
+      orderBy: { id: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        method: true,
+        interval: true,
+        status: true,
+        lastCheckedAt: true,
+        failureCount: true,
+        maintenanceUntil: true
+      }
+    });
 
-    const uptimeStats: any[] = await prisma.$queryRaw`
-      SELECT 
-        l."monitorId",
-        COUNT(*)::float as total,
-        COUNT(CASE WHEN l."status" = 'UP' THEN 1 END)::float as up
-      FROM "Log" l
-      JOIN "Monitor" m ON l."monitorId" = m.id
-      WHERE m."projectId" = ${project.id}
-      AND l."createdAt" > (NOW() - INTERVAL '30 days')
-      GROUP BY l."monitorId"
-    `;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Map stats back to monitors
+    const logsSummary = await prisma.log.groupBy({
+      by: ['monitorId', 'status'],
+      where: {
+        monitorId: { in: monitors.map(m => m.id) },
+        createdAt: { gte: thirtyDaysAgo }
+      },
+      _count: true
+    });
+
     return monitors.map((monitor) => {
-      const stats = uptimeStats.find((s) => s.monitorId === monitor.id);
-      const uptime30d = stats && stats.total > 0 
-        ? parseFloat(((stats.up / stats.total) * 100).toFixed(2)) 
-        : 100; // Default to 100% if no logs
+      const monitorLogs = logsSummary.filter(l => l.monitorId === monitor.id);
+      const total = monitorLogs.reduce((acc, l) => acc + l._count, 0);
+      const up = monitorLogs.find(l => l.status === 'UP')?._count || 0;
+      const uptime30d = total > 0 ? parseFloat(((up / total) * 100).toFixed(2)) : 100;
 
-      return { 
-        id: monitor.id,
-        name: monitor.name || monitor.url,
-        url: monitor.url,
-        method: monitor.method,
-        interval: monitor.interval,
-        status: monitor.status,
-        lastCheckedAt: monitor.lastCheckedAt,
-        uptime30d 
-      };
+      return { ...monitor, uptime30d };
     });
   }
 
   static async getMonitorById(userId: string, monitorId: string) {
-    const project = await this.getDefaultProject(userId);
-
-    const monitors: any[] = await prisma.$queryRaw`
-      SELECT id, "name" AS "name", url, method, interval, status, "failureCount", "projectId", "lastCheckedAt"
-      FROM "Monitor" 
-      WHERE id = ${monitorId} AND "projectId" = ${project.id}
-    `;
-    const monitor = monitors[0];
+    const monitor = await prisma.monitor.findFirst({
+      where: { id: monitorId, project: { userId } },
+      include: {
+        logs: { orderBy: { createdAt: 'desc' }, take: 50 },
+        incidents: { orderBy: { startedAt: 'desc' }, take: 20 }
+      }
+    });
 
     if (!monitor) {
-      const error = new Error('Monitor not found');
+      const error = new Error('Monitor not found or access denied');
       (error as any).status = 404;
       throw error;
     }
 
-    const logs = await prisma.log.findMany({
-      where: { monitorId },
-      orderBy: { createdAt: 'desc' },
-      take: 50
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const countData = await prisma.log.groupBy({
+      by: ['status'],
+      where: { monitorId, createdAt: { gte: thirtyDaysAgo } },
+      _count: true
     });
 
-    // Include incidents via raw SQL
-    const incidents: any[] = await prisma.$queryRaw`
-      SELECT * FROM "Incident" 
-      WHERE "monitorId" = ${monitorId} 
-      ORDER BY "startedAt" DESC 
-      LIMIT 20
-    `;
+    const total = countData.reduce((acc, c) => acc + c._count, 0);
+    const up = countData.find(c => c.status === 'UP')?._count || 0;
+    const uptime30d = total > 0 ? parseFloat(((up / total) * 100).toFixed(2)) : 100;
 
-    // Calculate 30-day uptime for this specific monitor
-    const uptimeResult: any[] = await prisma.$queryRaw`
-      SELECT 
-        COUNT(*)::float as total,
-        COUNT(CASE WHEN "status" = 'UP' THEN 1 END)::float as up
-      FROM "Log"
-      WHERE "monitorId" = ${monitorId} AND "createdAt" > (NOW() - INTERVAL '30 days')
-    `;
-
-    const stats = uptimeResult[0];
-    const uptime30d = stats && stats.total > 0 
-      ? parseFloat(((stats.up / stats.total) * 100).toFixed(2)) 
-      : 100;
-
-    return { ...monitor, logs, incidents, uptime30d };
+    return { ...monitor, uptime30d };
   }
 
   static async deleteMonitor(userId: string, monitorId: string) {
-    const project = await this.getDefaultProject(userId);
-
-    const monitor = await prisma.monitor.findFirst({
-      where: { id: monitorId, projectId: project.id },
-    });
+    const monitor = await this.getVerifiedMonitor(userId, monitorId);
 
     if (!monitor) {
-      const error = new Error('Monitor not found');
+      const error = new Error('Monitor not found or access denied');
       (error as any).status = 404;
       throw error;
     }
 
-    // Execute deletion atomically to prevent race condition locks from the background worker
-    // Phase 6: Include cleanup of incidents
-    await prisma.$transaction([
-      prisma.log.deleteMany({ where: { monitorId } }),
-      prisma.alert.deleteMany({ where: { monitorId } }),
-      prisma.incident.deleteMany({ where: { monitorId } }),
-      prisma.monitor.delete({ where: { id: monitorId } })
-    ]);
-
+    await prisma.monitor.delete({ where: { id: monitorId } });
+    await AuditService.log(userId, 'DELETE_MONITOR', 'Monitor', monitorId);
     return true;
   }
 }

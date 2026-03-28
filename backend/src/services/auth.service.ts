@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../utils/prisma.js';
 import { generateToken } from '../utils/jwt.js';
+import { AuditService } from './audit.service.js';
 
 export class AuthService {
   static async register(data: any) {
@@ -20,6 +21,10 @@ export class AuthService {
     });
 
     const token = generateToken(user.id);
+    
+    // Audit Logging for Security
+    await AuditService.log(user.id, 'USER_REGISTER', 'User', user.id, { email: user.email });
+    
     return { user: { id: user.id, email: user.email }, token };
   }
 
@@ -33,10 +38,15 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      // Potentially log failed login attempt for brute force detection later
       throw new Error('Invalid credentials');
     }
 
     const token = generateToken(user.id);
+
+    // Audit Logging for Security
+    await AuditService.log(user.id, 'USER_LOGIN', 'User', user.id);
+
     return { user: { id: user.id, email: user.email }, token };
   }
 }

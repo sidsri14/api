@@ -12,7 +12,13 @@ const resolve6 = promisify(dns.resolve6);
  */
 export const isPrivateIP = (ip: string): boolean => {
   try {
-    const addr = ipaddr.parse(ip);
+    let addr = ipaddr.parse(ip);
+    
+    // Normalize IPv4-mapped IPv6 (::ffff:127.0.0.1) to IPv4
+    if (addr.kind() === 'ipv6' && (addr as ipaddr.IPv6).isIPv4MappedAddress()) {
+      addr = (addr as ipaddr.IPv6).toIPv4Address();
+    }
+    
     const range = addr.range();
     return ['private', 'loopback', 'linkLocal', 'multicast', 'unspecified'].includes(range);
   } catch (e) {

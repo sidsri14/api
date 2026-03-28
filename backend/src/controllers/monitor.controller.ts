@@ -12,6 +12,15 @@ export const createMonitor = async (req: AuthRequest, res: Response, next: NextF
   }
 };
 
+export const updateMonitor = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const monitor = await MonitorService.updateMonitor(req.userId!, req.params.id as string, req.body);
+    successResponse(res, monitor, 200);
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status || 400);
+  }
+};
+
 export const getMonitors = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const monitors = await MonitorService.getMonitors(req.userId!);
