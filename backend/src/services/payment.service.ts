@@ -148,10 +148,13 @@ export class PaymentService {
       err.status = 400;
       throw err;
     }
-    // Reset timing so worker picks it up on next tick
+    // Reset timing so worker picks it up on next tick.
+    // Use epoch (new Date(0)) rather than null: the null path in getPendingForRetry
+    // only matches retryCount=0. For retryCount>0 the query uses `lte: agoXXh`, so
+    // a past epoch date guarantees immediate pickup regardless of retry count.
     await prisma.failedPayment.update({
       where: { id: failedPaymentId },
-      data: { lastRetryAt: null },
+      data: { lastRetryAt: new Date(0) },
     });
   }
 }

@@ -8,14 +8,19 @@ const razorpay = new Razorpay({
 
 export class RazorpayService {
   static verifyWebhookSignature(rawBody: string, signature: string): boolean {
-    const expectedSignature = crypto
+    const expected = crypto
       .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!)
       .update(rawBody)
       .digest('hex');
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(signature, 'hex')
-    );
+    try {
+      const expectedBuf = Buffer.from(expected, 'hex');
+      const receivedBuf = Buffer.from(signature, 'hex');
+      // timingSafeEqual throws if lengths differ — guard against malformed signatures
+      if (expectedBuf.length !== receivedBuf.length) return false;
+      return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+    } catch {
+      return false;
+    }
   }
 
   static async createPaymentLink(params: {

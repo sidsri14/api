@@ -22,13 +22,3 @@ export const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export const createMonitorLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Limit each IP to 20 monitor creations per hour
-  message: {
-    success: false,
-    error: 'Monitor creation limit exceeded. Please try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
