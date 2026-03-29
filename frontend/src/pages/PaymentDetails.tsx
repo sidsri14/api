@@ -213,7 +213,7 @@ const PaymentDetails: React.FC = () => {
             Raw Razorpay Payload
           </summary>
           <pre className="px-6 pb-6 text-xs font-mono text-stone-500 dark:text-stone-400 overflow-auto max-h-64">
-            {JSON.stringify(JSON.parse(payment.metadata), null, 2)}
+            {(() => { try { return JSON.stringify(JSON.parse(payment.metadata), null, 2); } catch { return payment.metadata; } })()}
           </pre>
         </details>
       )}

@@ -9,7 +9,7 @@ export class AuditService {
           action,
           resource,
           resourceId,
-          details: details ? JSON.parse(JSON.stringify(details)) : undefined,
+          details: details ? JSON.stringify(details) : null,
         },
       });
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -42,11 +42,13 @@ type LayoutProps = {
   onLogout: () => void;
 };
 
-const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user, onLogout }) => (
+const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user, onLogout }) => {
+  const navigate = useNavigate();
+  return (
   <div className="min-h-screen flex flex-col transition-colors bg-cream dark:bg-stone-900">
     <header className="sticky top-0 z-50 p-4 border-b border-warm-border dark:border-stone-800 bg-white/90 dark:bg-stone-900/90 backdrop-blur-md transition-all">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.href = '/'}>
+        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
           <div className="bg-emerald-600 dark:bg-emerald-700 p-2.5 rounded-xl group-hover:bg-emerald-500 dark:group-hover:bg-emerald-600 transition-colors">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
@@ -87,7 +89,8 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
       </p>
     </footer>
   </div>
-);
+  );
+};
 
 function App() {
   const [user, setUser] = useState<AuthUser | null>(null);

@@ -46,7 +46,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // In cookie-based auth, we don't need to manually clear tokens.
+      // Session expired or invalid — redirect to login so the user can re-authenticate
+      window.location.href = '/login';
     }
     // On CSRF failure, clear the cached token so next request fetches fresh
     if (error.response?.status === 403) {
