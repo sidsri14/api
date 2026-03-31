@@ -7,8 +7,10 @@ export const getPayments = async (req: AuthRequest, res: Response, _next: NextFu
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
     const search = typeof req.query.search === 'string' ? req.query.search : undefined;
-    const payments = await PaymentService.getPayments(req.userId!, { status, search });
-    successResponse(res, payments);
+    const page = typeof req.query.page === 'string' ? parseInt(req.query.page, 10) : 1;
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : 50;
+    const result = await PaymentService.getPayments(req.userId!, { status, search, page, limit });
+    successResponse(res, result);
   } catch (error: any) {
     errorResponse(res, error.message, error.status || 500);
   }

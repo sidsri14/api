@@ -51,6 +51,42 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   successResponse(res, { message: 'Logged out successfully' }, 200);
 };
 
+export const verifyEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const result = await AuthService.verifyEmail(token);
+    successResponse(res, result);
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status || 400);
+  }
+};
+
+export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (typeof email !== 'string') { errorResponse(res, 'Email is required', 400); return; }
+    const result = await AuthService.requestPasswordReset(email);
+    successResponse(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+    if (typeof token !== 'string' || typeof password !== 'string') {
+      errorResponse(res, 'token and password are required', 400);
+      return;
+    }
+    if (password.length < 8) { errorResponse(res, 'Password must be at least 8 characters', 400); return; }
+    const result = await AuthService.resetPassword(token, password);
+    successResponse(res, result);
+  } catch (error: any) {
+    errorResponse(res, error.message, error.status || 400);
+  }
+};
+
 export const getMe = async (req: any, res: Response, next: NextFunction): Promise<void> => {
   try {
     const user = await prisma.user.findUnique({

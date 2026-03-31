@@ -20,6 +20,9 @@ import { successResponse } from './utils/apiResponse.js';
 
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required.');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
+if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length !== 64) {
+  throw new Error('ENCRYPTION_KEY must be a 64-char hex string. Generate: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

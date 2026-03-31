@@ -1,4 +1,5 @@
 import { prisma } from '../utils/prisma.js';
+import { encrypt, decrypt } from '../utils/crypto.utils.js';
 
 export class SourceService {
   static async createSource(
@@ -14,8 +15,8 @@ export class SourceService {
       data: {
         userId,
         keyId: data.keyId,
-        keySecret: data.keySecret,
-        webhookSecret: data.webhookSecret,
+        keySecret: encrypt(data.keySecret),
+        webhookSecret: encrypt(data.webhookSecret),
         name: data.name,
       },
       select: {
@@ -59,10 +60,16 @@ export class SourceService {
     await prisma.paymentSource.delete({ where: { id: sourceId } });
   }
 
-  // Used by webhook handler — no userId check, looks up by sourceId only
+  // Used by webhook handler and worker — returns decrypted secrets.
   static async getSourceForWebhook(sourceId: string) {
-    return prisma.paymentSource.findUnique({
+    const source = await prisma.paymentSource.findUnique({
       where: { id: sourceId },
     });
+    if (!source) return null;
+    return {
+      ...source,
+      keySecret: decrypt(source.keySecret),
+      webhookSecret: decrypt(source.webhookSecret),
+    };
   }
 }

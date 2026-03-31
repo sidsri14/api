@@ -9,13 +9,20 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  email          String          @unique
-  password       String
-  plan           String          @default("free") // "free" | "paid"
-  createdAt      DateTime        @default(now())
-  sources        PaymentSource[]
-  failedPayments FailedPayment[]
+  id                    String          @id @default(uuid())
+  email                 String          @unique
+  password              String
+  plan                  String          @default("free") // "free" | "paid"
+  createdAt             DateTime        @default(now())
+  // Email verification
+  emailVerified         Boolean         @default(false)
+  emailVerifyToken      String?         @unique
+  emailVerifyExpiry     DateTime?
+  // Password reset
+  passwordResetToken    String?         @unique
+  passwordResetExpiry   DateTime?
+  sources               PaymentSource[]
+  failedPayments        FailedPayment[]
 }
 
 model PaymentSource {
@@ -29,22 +36,26 @@ model PaymentSource {
   webhookSecret String
   createdAt     DateTime       @default(now())
   events        PaymentEvent[]
+
+  @@index([userId])
 }
 
 model PaymentEvent {
-  id            String        @id @default(uuid())
-  sourceId      String
-  source        PaymentSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  razorpayEventId String     @unique
-  eventType     String
-  paymentId     String
-  amount        Int
-  email         String
-  contact       String?
-  status        String
-  rawData       String
-  createdAt     DateTime      @default(now())
-  failedPayment FailedPayment?
+  id              String        @id @default(uuid())
+  sourceId        String
+  source          PaymentSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  razorpayEventId String        @unique
+  eventType       String
+  paymentId       String
+  amount          Int
+  email           String
+  contact         String?
+  status          String
+  rawData         String
+  createdAt       DateTime      @default(now())
+  failedPayment   FailedPayment?
+
+  @@index([sourceId])
 }
 
 model FailedPayment {
@@ -65,11 +76,14 @@ model FailedPayment {
   lastRetryAt   DateTime?
   nextRetryAt   DateTime?
   recoveredAt   DateTime?
-  recoveredVia  String?   // "link" | "external"
+  recoveredVia  String?       // "link" | "external"
   metadata      String?
   createdAt     DateTime      @default(now())
   reminders     Reminder[]
   recoveryLinks RecoveryLink[]
+
+  @@index([userId])
+  @@index([status, nextRetryAt]) // worker query: pending/retrying payments due for retry
 }
 
 model RecoveryLink {
@@ -78,6 +92,8 @@ model RecoveryLink {
   failedPayment   FailedPayment @relation(fields: [failedPaymentId], references: [id], onDelete: Cascade)
   url             String
   createdAt       DateTime      @default(now())
+
+  @@index([failedPaymentId])
 }
 
 model Reminder {
@@ -88,6 +104,8 @@ model Reminder {
   dayOffset       Int
   sentAt          DateTime      @default(now())
   status          String        @default("sent")
+
+  @@index([failedPaymentId])
 }
 
 model AuditLog {
@@ -98,4 +116,6 @@ model AuditLog {
   resourceId String?
   details    String?
   createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
 }

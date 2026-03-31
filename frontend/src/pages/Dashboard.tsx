@@ -290,7 +290,7 @@ const DemoPanel: React.FC = () => {
       const d = data.data;
       setLastDemo({ id: d.id, amount: d.amount, name: d.customerName, product: d.product });
       toast.success(`Demo: ${d.customerName}'s ₹${(d.amount / 100).toLocaleString('en-IN')} payment failed`);
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', page, PAGE_SIZE] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: () => toast.error('Demo failed'),
@@ -301,7 +301,7 @@ const DemoPanel: React.FC = () => {
     onSuccess: () => {
       toast.success('Demo payment recovered!');
       setLastDemo(null);
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', page, PAGE_SIZE] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: () => toast.error('Recovery failed'),
@@ -360,6 +360,8 @@ const Dashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'pending' | 'retrying' | 'recovered' | 'abandoned'>('ALL');
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -398,16 +400,18 @@ const Dashboard: React.FC = () => {
     staleTime: 10000,
   });
 
-  // ── Payments
-  const { data: payments = [], isLoading, isFetching } = useQuery({
-    queryKey: ['payments'],
+  // ── Payments (paginated)
+  const { data: paymentsPage, isLoading, isFetching } = useQuery({
+    queryKey: ['payments', page, PAGE_SIZE],
     queryFn: async () => {
-      const { data } = await api.get('/payments');
-      return data.data as FailedPayment[];
+      const { data } = await api.get('/payments', { params: { page, limit: PAGE_SIZE } });
+      return data.data as { payments: FailedPayment[]; total: number; page: number; limit: number; totalPages: number };
     },
     refetchInterval: 30000,
     staleTime: 10000,
   });
+  const payments = paymentsPage?.payments ?? [];
+  const totalPages = paymentsPage?.totalPages ?? 1;
 
   // ── Upgrade mutation
   const upgradeMutation = useMutation({
@@ -425,7 +429,7 @@ const Dashboard: React.FC = () => {
     mutationFn: (id: string) => api.post(`/payments/${id}/retry`),
     onSuccess: () => {
       toast.success('Retry queued — reminder will send on next worker tick');
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', page, PAGE_SIZE] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: () => toast.error('Failed to trigger retry'),
@@ -477,7 +481,7 @@ const Dashboard: React.FC = () => {
     mutationFn: () => api.post('/demo/simulate-failure'),
     onSuccess: () => {
       toast.success('Demo failure created');
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', page, PAGE_SIZE] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     },
     onError: () => toast.error('Demo failed'),
@@ -825,6 +829,31 @@ const Dashboard: React.FC = () => {
                 ))}
               </AnimatePresence>
             </ul>
+          )}
+
+          {/* ── Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 dark:border-white/5">
+              <span className="text-xs text-stone-400">
+                Page {page} of {totalPages} · {paymentsPage?.total} total
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 text-xs font-semibold border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 transition-all"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-3 py-1.5 text-xs font-semibold border border-stone-200 dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-40 transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </motion.div>

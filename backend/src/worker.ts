@@ -3,6 +3,7 @@ import pino from 'pino';
 import { prisma } from './utils/prisma.js';
 import { PaymentService } from './services/payment.service.js';
 import { RazorpayService } from './services/razorpay.service.js';
+import { SourceService } from './services/source.service.js';
 import { sendPaymentFailedEmail, sendPaymentReminderEmail } from './services/email.service.js';
 import { AuditService } from './services/audit.service.js';
 
@@ -58,18 +59,22 @@ const processRecoveryQueue = async (): Promise<void> => {
           continue;
         }
 
-        // Get source to obtain Razorpay credentials
-        const event = await prisma.paymentEvent.findUnique({
-          where: { id: payment.eventId ?? '' },
-          include: { source: true },
-        });
-
+        // Get source credentials (decrypted) for this payment
         let keyId = process.env.RAZORPAY_KEY_ID!;
         let keySecret = process.env.RAZORPAY_KEY_SECRET!;
 
-        if (event?.source) {
-          keyId = event.source.keyId;
-          keySecret = event.source.keySecret;
+        if (payment.eventId) {
+          const event = await prisma.paymentEvent.findUnique({
+            where: { id: payment.eventId },
+            select: { sourceId: true },
+          });
+          if (event?.sourceId) {
+            const source = await SourceService.getSourceForWebhook(event.sourceId);
+            if (source) {
+              keyId = source.keyId;
+              keySecret = source.keySecret; // already decrypted by getSourceForWebhook
+            }
+          }
         }
 
         // Use existing recovery link if available, otherwise create one
@@ -110,8 +115,7 @@ const processRecoveryQueue = async (): Promise<void> => {
           logger.error({ paymentId: payment.paymentId, err }, 'Email send failed')
         );
 
-        await PaymentService.recordReminder(payment.id, dayOffset, 'email');
-        await PaymentService.incrementRetry(payment.id);
+        await PaymentService.recordReminderAndIncrementRetry(payment.id, dayOffset, 'email');
         await AuditService.log(
           payment.userId,
           'PAYMENT_REMINDER_SENT',

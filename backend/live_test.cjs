@@ -1,100 +1,159 @@
+/**
+ * PayRecover end-to-end integration test.
+ * Tests: register → add source → simulate webhook → verify recovery.
+ *
+ * Run:  node live_test.cjs
+ * Requires the server to be running on http://localhost:3000
+ *
+ * Each run creates a unique test user and cleans it up via DELETE /api/auth/me
+ * (if that endpoint exists) or via direct DB delete (Prisma cascade handles the rest).
+ * A unique email per run ensures no collision between test runs.
+ */
 const axios = require('axios');
 const crypto = require('crypto');
 
-const API_BASE = 'http://localhost:3000/api';
-const SECRET = 'mock_webhook_secret';
+const BASE = 'http://localhost:3000';
+const API = `${BASE}/api`;
 const EMAIL = `live-test-${Date.now()}@example.com`;
 const PASSWORD = 'Password123!';
 
-async function runTest() {
+// Plain-text secrets used to sign outgoing webhooks.
+// The server encrypts them on storage; we sign with the plain-text secret here.
+const TEST_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_xxxx';
+const TEST_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'xxxx';
+const TEST_WEBHOOK_SECRET = 'test_webhook_secret_' + Date.now();
+
+function sign(payload, secret) {
+  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+}
+
+async function run() {
+  let authHeaders;
+  let sourceId;
+
   try {
-    console.log('--- Phase 1: Registration ---');
-    // Get CSRF Token
-    const csrfRes = await axios.get(`${API_BASE.replace('/api', '')}/api/csrf-token`);
+    // ── 1. CSRF token
+    const csrfRes = await axios.get(`${API}/csrf-token`);
     const csrfToken = csrfRes.data.token;
-    const sessionCookie = csrfRes.headers['set-cookie'];
+    const csrfCookie = csrfRes.headers['set-cookie'];
 
-    // Register
-    const regRes = await axios.post(`${API_BASE}/auth/register`, 
+    // ── 2. Register
+    console.log('1. Registering user...');
+    const regRes = await axios.post(`${API}/auth/register`,
       { email: EMAIL, password: PASSWORD },
-      { headers: { 'x-csrf-token': csrfToken, Cookie: sessionCookie } }
+      { headers: { 'x-csrf-token': csrfToken, Cookie: csrfCookie } }
     );
-    console.log('Registration Success:', regRes.data.success);
-    const authHeaders = { Cookie: regRes.headers['set-cookie'], 'x-csrf-token': csrfToken };
+    const authCookie = regRes.headers['set-cookie'];
+    authHeaders = { Cookie: authCookie, 'x-csrf-token': csrfToken };
+    console.log('   ✓ Registered:', EMAIL);
 
-    console.log('\n--- Phase 2: Initial Dashboard Check ---');
-    const initStats = await axios.get(`${API_BASE}/dashboard/stats`, { headers: authHeaders });
-    console.log('Initial Recovery Rate:', initStats.data.data.recoveryRate, '%');
+    // ── 3. Add a PaymentSource (required — webhook URL includes sourceId)
+    console.log('2. Adding PaymentSource...');
+    const sourceRes = await axios.post(`${API}/sources/connect`,
+      { keyId: TEST_KEY_ID, keySecret: TEST_KEY_SECRET, webhookSecret: TEST_WEBHOOK_SECRET, name: 'Live Test Source' },
+      { headers: authHeaders }
+    );
+    sourceId = sourceRes.data.data.id;
+    console.log('   ✓ Source created:', sourceId);
 
-    console.log('\n--- Phase 3: Simulate Failed Payment Webhook ---');
-    const paymentId = `pay_live_${Math.floor(Math.random() * 10000)}`;
+    // ── 4. Initial dashboard state
+    const initStats = await axios.get(`${API}/dashboard/stats`, { headers: authHeaders });
+    console.log('3. Initial state — total failed:', initStats.data.data.totalFailed);
+
+    // ── 5. Send payment.failed webhook to /api/webhooks/razorpay/:sourceId
+    console.log('4. Sending payment.failed webhook...');
+    const paymentId = `pay_live_${crypto.randomBytes(4).toString('hex')}`;
     const failPayload = JSON.stringify({
       event: 'payment.failed',
+      account_id: 'acc_test',
+      created_at: Math.floor(Date.now() / 1000),
       payload: {
         payment: {
           entity: {
             id: paymentId,
-            amount: 50000,
+            amount: 99900,
             currency: 'INR',
             email: EMAIL,
             contact: '+919999999999',
-            order_id: 'order_live_abc',
-            notes: { name: 'Live User' }
-          }
-        }
-      }
+            order_id: 'order_live_test',
+            status: 'failed',
+            notes: { name: 'Live Test User' },
+          },
+        },
+      },
     });
-    const sig = crypto.createHmac('sha256', SECRET).update(failPayload).digest('hex');
-    await axios.post(`${API_BASE}/webhook/razorpay`, failPayload, {
-      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sig }
+    await axios.post(`${API}/webhooks/razorpay/${sourceId}`, failPayload, {
+      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sign(failPayload, TEST_WEBHOOK_SECRET) },
     });
-    console.log('Webhook Sent: payment.failed');
+    console.log('   ✓ payment.failed sent for', paymentId);
 
     // Wait for async processing
-    console.log('Waiting for background processing...');
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 500));
 
-    console.log('\n--- Phase 4: Intermediate Dashboard Check ---');
-    const midStats = await axios.get(`${API_BASE}/dashboard/stats`, { headers: authHeaders });
-    console.log('Status Refresh - Found Payments:', midStats.data.data.totalFound);
+    const midStats = await axios.get(`${API}/dashboard/stats`, { headers: authHeaders });
+    console.log('5. After failure — total failed:', midStats.data.data.totalFailed);
+    if (midStats.data.data.totalFailed !== 1) {
+      throw new Error('Expected totalFailed = 1, got ' + midStats.data.data.totalFailed);
+    }
 
-    console.log('\n--- Phase 5: Simulate Successful Recovery ---');
-    const successPayload = JSON.stringify({
+    // ── 6. Send payment.captured webhook (simulates customer paying via recovery link)
+    console.log('6. Sending payment.captured webhook...');
+    const capturePayload = JSON.stringify({
       event: 'payment.captured',
+      account_id: 'acc_test',
+      created_at: Math.floor(Date.now() / 1000),
       payload: {
         payment: {
           entity: {
             id: paymentId,
-            amount: 50000,
+            amount: 99900,
             currency: 'INR',
-            email: EMAIL
-          }
-        }
-      }
+            email: EMAIL,
+            order_id: 'order_live_test',
+            status: 'captured',
+          },
+        },
+      },
     });
-    const sig2 = crypto.createHmac('sha256', SECRET).update(successPayload).digest('hex');
-    await axios.post(`${API_BASE}/webhook/razorpay`, successPayload, {
-      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sig2 }
+    await axios.post(`${API}/webhooks/razorpay/${sourceId}`, capturePayload, {
+      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sign(capturePayload, TEST_WEBHOOK_SECRET) },
     });
-    console.log('Webhook Sent: payment.captured');
+    console.log('   ✓ payment.captured sent');
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 500));
 
-    console.log('\n--- Phase 6: Final Dashboard Verification ---');
-    const finalStats = await axios.get(`${API_BASE}/dashboard/stats`, { headers: authHeaders });
-    console.log('Final Recovery Rate:', finalStats.data.data.recoveryRate, '%');
-    console.log('Recovered Amount:', finalStats.data.data.totalRecoveredAmount);
+    // ── 7. Verify recovery
+    const finalStats = await axios.get(`${API}/dashboard/stats`, { headers: authHeaders });
+    const { totalFailed, totalRecovered, recoveryRate } = finalStats.data.data;
+    console.log('7. Final — failed:', totalFailed, '| recovered:', totalRecovered, '| rate:', recoveryRate + '%');
 
-    if (finalStats.data.data.recoveryRate === 100) {
-      console.log('\n✅ TEST PASSED: End-to-End recovery flow is functional.');
-      console.log(`Credentials for manual login: ${EMAIL} / ${PASSWORD}`);
+    if (totalRecovered === 1 && recoveryRate === 100) {
+      console.log('\n✅ TEST PASSED — end-to-end recovery flow is functional.');
     } else {
-      console.log('\n❌ TEST FAILED: Recovery rate mismatch.');
+      console.error('\n❌ TEST FAILED — unexpected final state.');
+      process.exit(1);
     }
-
   } catch (err) {
-    console.error('\n❌ TEST ERROR:', err.response ? err.response.data : err.message);
+    console.error('\n❌ TEST ERROR:', err.response?.data ?? err.message);
+    process.exit(1);
+  } finally {
+    // ── 8. Cleanup — delete the test user (cascades to sources, payments, events)
+    //    This keeps test runs idempotent and the DB clean.
+    //    Uses a direct Prisma delete via a lightweight cleanup script.
+    //    If you need to inspect the test data, comment this block out.
+    if (authHeaders) {
+      try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        await prisma.user.deleteMany({ where: { email: EMAIL } });
+        await prisma.$disconnect();
+        console.log('8. Cleanup — test user deleted.');
+      } catch (cleanupErr) {
+        // Non-fatal: test passed, cleanup is best-effort
+        console.warn('   ⚠ Cleanup skipped (not fatal):', cleanupErr.message);
+      }
+    }
   }
 }
 
-runTest();
+run();
