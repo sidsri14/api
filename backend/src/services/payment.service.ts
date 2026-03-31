@@ -128,6 +128,7 @@ export class PaymentService {
       include: {
         recoveryLinks: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
+      take: 50, // process at most 50 per tick to keep cycles bounded
     });
   }
 

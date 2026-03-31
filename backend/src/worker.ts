@@ -47,6 +47,17 @@ const processRecoveryQueue = async (): Promise<void> => {
 
     for (const payment of pending) {
       try {
+        // Race condition guard: re-check status before processing.
+        // The payment could have been recovered by a webhook between our query and now.
+        const fresh = await prisma.failedPayment.findUnique({
+          where: { id: payment.id },
+          select: { status: true },
+        });
+        if (!fresh || !['pending', 'retrying'].includes(fresh.status)) {
+          logger.info({ paymentId: payment.paymentId }, 'Payment already processed, skipping');
+          continue;
+        }
+
         // Get source to obtain Razorpay credentials
         const event = await prisma.paymentEvent.findUnique({
           where: { id: payment.eventId ?? '' },
@@ -76,27 +87,28 @@ const processRecoveryQueue = async (): Promise<void> => {
           await PaymentService.createRecoveryLink(payment.id, paymentLink);
         }
 
-        // Send appropriate email based on retry sequence
         const dayOffset = payment.retryCount === 0 ? 0 : payment.retryCount === 1 ? 1 : 3;
 
-        if (payment.retryCount === 0) {
-          await sendPaymentFailedEmail(payment.customerEmail, {
-            customerName: payment.customerName ?? undefined,
-            amount: payment.amount,
-            currency: payment.currency,
-            paymentLink,
-            paymentId: payment.paymentId,
-          });
-        } else {
-          await sendPaymentReminderEmail(payment.customerEmail, {
-            customerName: payment.customerName ?? undefined,
-            amount: payment.amount,
-            currency: payment.currency,
-            paymentLink,
-            dayOffset,
-            paymentId: payment.paymentId,
-          });
-        }
+        // Fire-and-forget: email must not block the worker loop or delay DB updates
+        const emailParams = payment.retryCount === 0
+          ? sendPaymentFailedEmail(payment.customerEmail, {
+              customerName: payment.customerName ?? undefined,
+              amount: payment.amount,
+              currency: payment.currency,
+              paymentLink,
+              paymentId: payment.paymentId,
+            })
+          : sendPaymentReminderEmail(payment.customerEmail, {
+              customerName: payment.customerName ?? undefined,
+              amount: payment.amount,
+              currency: payment.currency,
+              paymentLink,
+              dayOffset,
+              paymentId: payment.paymentId,
+            });
+        void emailParams.catch((err: unknown) =>
+          logger.error({ paymentId: payment.paymentId, err }, 'Email send failed')
+        );
 
         await PaymentService.recordReminder(payment.id, dayOffset, 'email');
         await PaymentService.incrementRetry(payment.id);

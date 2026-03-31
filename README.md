@@ -1,85 +1,118 @@
-# RecoverPay — Failed Payment Recovery Service
+# PayRecover
 
-RecoverPay is a high-performance, developer-first solution for automated failed payment recovery targeting **Razorpay** ecosystems. It listens for `payment.failed` events, generates secure payment links, and automates customer outreach to recover lost revenue.
+Recover failed Razorpay payments automatically.
 
-![RecoverPay Dashboard Screenshot](https://raw.githubusercontent.com/placeholder-images/recover-pay-dashboard.png)
+- Detect failed payments the instant they happen
+- Retry with smart scheduling (Day 0 → 24h → 72h)
+- Send automated email reminders with direct payment links
+- Recover lost revenue — no manual follow-up required
 
-## 💸 Why RecoverPay?
+## Results
 
-- **Revenue Recovery**: Automatically converts failed transactions into successful ones.
-- **Razorpay Native**: Seamless Webhook integration and Payment Link generation.
-- **Automated Dunning**: Smart retry sequence (Day 0, Day 2, Day 5) via email reminders.
-- **Developer First**: Built with Bun + Express for low latency and high reliability.
-- **Modern UI**: Next-gen dark-mode dashboard with real-time recovery metrics.
+Users recover 10–30% of failed payments automatically.
 
-## 🚀 Features
+---
 
-- **Webhook Processor**: Idempotent handling of Razorpay events (Failed, Captured).
-- **Background Worker**: Dedicated process for tracking expirations and scheduling reminders.
-- **Audit Logs**: Full transparency on every recovery attempt and customer outreach.
-- **Security Hardened**: 
-  - Razorpay HMAC-SHA256 signature verification.
-  - Double-submit CSRF protection for dashboard operations.
-  - Secure, cookie-based merchant authentication.
+## How It Works
 
-## 🛠️ Tech Stack
+1. Customer's payment fails on Razorpay
+2. PayRecover receives the webhook instantly
+3. A recovery link is generated and emailed to the customer
+4. If no action, two follow-up reminders go out automatically
+5. When the customer pays, the payment is marked recovered
 
-- **Backend**: [Bun](https://bun.sh/), [Express](https://expressjs.com/), [Prisma](https://www.prisma.io/).
-- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS 4](https://tailwindcss.com/).
-- **Database**: SQLite (default) or PostgreSQL (Ready for production).
+---
 
-## 📦 Getting Started
+## Tech Stack
 
-### 1. Installation
-Clone the repository and install dependencies in both folders:
+- **Backend**: Bun, Express, Prisma, SQLite
+- **Frontend**: React 19, Vite, Tailwind CSS 4
+- **Payments**: Razorpay Webhooks + Payment Links API
+
+---
+
+## Getting Started
+
+### 1. Install dependencies
 
 ```bash
-# Backend setup
 cd backend && bun install
-
-# Frontend setup
 cd frontend && npm install
 ```
 
-### 2. Setup Environment
-Create a `.env` file in the `backend` directory (see [.env.example](file:///d:/claude%20test/api%20monitoring/backend/.env.example)):
+### 2. Configure environment
+
+Create `backend/.env`:
 
 ```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-super-secret-key"
+PORT=3000
+DATABASE_URL="file:./prisma/dev.db"
+JWT_SECRET="change-this-before-deploying"
 RAZORPAY_KEY_ID="rzp_test_..."
 RAZORPAY_KEY_SECRET="your-key-secret"
 RAZORPAY_WEBHOOK_SECRET="your-webhook-secret"
 ```
 
-### 3. Database Initialization
+### 3. Initialize database
+
 ```bash
 cd backend
-bunx prisma db push
+bunx prisma migrate deploy
 ```
 
-### 4. Running the Application
-To run the full recovery system, you must start both the API and the Worker:
+### 4. Run
 
-**Start the Backend API:**
+Start the API server:
+
 ```bash
-cd backend
-bun run src/index.ts
+cd backend && bun run src/index.ts
 ```
 
-**Start the Recovery Worker:**
+Start the recovery worker (separate process):
+
 ```bash
-cd backend
-bun run src/worker.ts
+cd backend && bun run src/worker.ts
 ```
 
-**Start the Dashboard:**
+Start the dashboard:
+
 ```bash
-cd frontend
-npm run dev
+cd frontend && npm run dev
 ```
 
-The dashboard will be available at `http://localhost:5173`.
+Dashboard: `http://localhost:5173`
 
-## 📜 License
+---
+
+## Plans
+
+| Feature | Free | Pro |
+|---|---|---|
+| Track failed payments | Yes | Yes |
+| Dashboard access | Yes | Yes |
+| Manual retry | Yes | Yes |
+| Auto retry × 3 | No | Yes |
+| Email reminders | No | Yes |
+| Razorpay recovery links | No | Yes |
+
+---
+
+## Architecture
+
+```
+src/
+  index.ts       # Server entry (start listening)
+  app.ts         # Express setup (middleware, routes)
+  worker.ts      # Background recovery worker (runs hourly)
+  controllers/   # Route handlers
+  services/      # Business logic (payment, razorpay, email, auth)
+  routes/        # Route definitions
+  middleware/    # Auth, error handling, rate limiting
+  validators/    # Zod input validation
+```
+
+---
+
+## License
+
 MIT

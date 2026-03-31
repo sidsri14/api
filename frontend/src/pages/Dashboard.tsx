@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, RefreshCw, TrendingUp, ExternalLink, RotateCcw, IndianRupee,
-  Zap, CheckCircle2, Shield, Calendar, ArrowUpRight, Lock, X,
+  Zap, CheckCircle2, Shield, Calendar, Lock, X,
   CheckCircle, Circle, ChevronRight, Sparkles, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -519,20 +519,9 @@ const Dashboard: React.FC = () => {
               </h1>
               <PlanBadge plan={plan} />
             </div>
-            {hasGained ? (
-              <motion.p
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"
-              >
-                <ArrowUpRight className="w-4 h-4" />
-                You've gained {formatAmount(stats?.totalRecoveredAmount ?? 0)} using PayRecover
-              </motion.p>
-            ) : (
-              <p className="text-stone-400 text-xs font-medium tracking-wide">
-                Automatic failed payment recovery
-              </p>
-            )}
+            <p className="text-stone-400 text-xs font-medium tracking-wide">
+              Automatic failed payment recovery
+            </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {(isFetching || statsFetching) && (
@@ -610,6 +599,27 @@ const Dashboard: React.FC = () => {
 
         {/* ── Demo Panel */}
         <DemoPanel />
+
+        {/* ── Hero recovered amount (shown once money is recovered) */}
+        <AnimatePresence>
+          {hasGained && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 p-6 text-white shadow-lg"
+            >
+              <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-1">Recovered using PayRecover</p>
+              <div className="text-5xl font-black tracking-tight">{formatAmount(stats?.totalRecoveredAmount ?? 0)}</div>
+              <p className="text-emerald-100 text-sm mt-2">
+                {stats?.totalRecovered} payment{(stats?.totalRecovered ?? 0) !== 1 ? 's' : ''} recovered
+                {(stats?.recoveredThisMonth ?? 0) > 0 && (
+                  <> · <strong className="text-white">{formatAmount(stats?.recoveredThisMonth ?? 0)}</strong> this month</>
+                )}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
