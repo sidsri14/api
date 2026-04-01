@@ -13,6 +13,7 @@ import demoRoutes from './routes/demo.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import sourceRoutes from './routes/source.routes.js';
 import { prisma } from './utils/prisma.js';
+import { redisConnection } from './jobs/recovery.queue.js';
 
 const app = express();
 
@@ -63,12 +64,34 @@ app.use('/api/', globalLimiter);
 
 // Health Check
 app.get('/health', async (_req, res) => {
+  const checks = { database: 'unknown', redis: 'unknown', razorpay: 'unknown' };
+  let healthy = true;
+
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ok', database: 'connected', version: '1.0.0' });
-  } catch (error) {
-    res.status(503).json({ status: 'error', database: 'disconnected' });
+    checks.database = 'connected';
+  } catch {
+    checks.database = 'disconnected';
+    healthy = false;
   }
+
+  try {
+    await redisConnection.ping();
+    checks.redis = 'connected';
+  } catch {
+    checks.redis = 'disconnected';
+    healthy = false;
+  }
+
+  const keyId = process.env.RAZORPAY_KEY_ID || '';
+  checks.razorpay = keyId.startsWith('rzp_') ? 'configured' : 'missing';
+  if (checks.razorpay === 'missing') healthy = false;
+
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    version: '1.0.0',
+    ...checks,
+  });
 });
 
 // Routes
