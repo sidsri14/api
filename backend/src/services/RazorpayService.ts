@@ -1,6 +1,5 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { prisma } from '../utils/prisma.js';
 
 // Initialize with environment variables
 const razorpay = new Razorpay({

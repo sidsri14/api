@@ -21,7 +21,10 @@ export const getPayment = async (req: AuthRequest, res: Response, next: NextFunc
   try {
     const p = await getPaymentDetails(req.userId!, String(req.params.id || ''));
     successResponse(res, p);
-  } catch (err) { next(err); }
+  } catch (err: any) {
+    if (err?.code === 'P2025') return errorResponse(res, 'Payment not found', 404);
+    next(err);
+  }
 };
 
 export const manualRetry = async (req: AuthRequest, res: Response, next: NextFunction) => {

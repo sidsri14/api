@@ -33,7 +33,7 @@ const ConnectForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   });
 
   const testMutation = useMutation({
-    mutationFn: (data: { keyId: string; keySecret: string }) => api.post('/sources/test', data),
+    mutationFn: (data: { keyId: string; keySecret: string }) => api.post('/sources/test-connection', data),
     onSuccess: () => toast.success('Connection verified successfully!'),
     onError: (err: any) => toast.error(err.response?.data?.error || 'Verification failed'),
   });

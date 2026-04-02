@@ -62,6 +62,18 @@ const globalLimiter = rateLimit({
 
 app.use('/api/', globalLimiter);
 
+// CSRF Token — returns a per-session token stored in a cookie.
+// The frontend sends it back as 'x-csrf-token' on state-changing requests.
+// Note: SameSite=Strict cookies already prevent CSRF; this adds a second layer.
+app.get('/api/csrf-token', (req, res) => {
+  let token = req.cookies?.['csrf-token'];
+  if (!token) {
+    token = require('crypto').randomBytes(32).toString('hex');
+    res.cookie('csrf-token', token, { httpOnly: false, sameSite: 'strict', secure: process.env.NODE_ENV !== 'development', maxAge: 7 * 24 * 3600000 });
+  }
+  res.json({ token });
+});
+
 // Health Check
 app.get('/health', async (_req, res) => {
   const checks = { database: 'unknown', redis: 'unknown', razorpay: 'unknown' };

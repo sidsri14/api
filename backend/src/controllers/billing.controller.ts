@@ -29,15 +29,14 @@ export const createSubscription = async (req: AuthRequest, res: Response, next: 
 export const billingWebhook = async (req: any, res: Response, next: NextFunction) => {
   try {
     const sig = req.headers['x-razorpay-signature'];
-    
-    // We use the raw body for signature verification
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+    if (typeof sig !== 'string' || !webhookSecret) {
+      return errorResponse(res, 'Invalid signature', 400);
+    }
+
     const rawBody = (req.body as Buffer).toString('utf8');
-    
-    const isValid = await RazorpayService.verifyWebhookSignature(
-      rawBody, 
-      sig as string, 
-      process.env.RAZORPAY_WEBHOOK_SECRET!
-    );
+    const isValid = await RazorpayService.verifyWebhookSignature(rawBody, sig, webhookSecret);
 
     if (!isValid) {
       return errorResponse(res, 'Invalid signature', 400);

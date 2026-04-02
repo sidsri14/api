@@ -9,8 +9,8 @@
   "scripts": {
     "start": "bun src/index.ts",
     "worker": "bun src/worker.ts",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test": "bun test src/__tests__",
+    "test:watch": "bun test src/__tests__ --watch"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

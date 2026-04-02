@@ -33,9 +33,15 @@ export const registerUser = async (data: any) => {
   return { user: { id: user.id, email }, token };
 };
 
+// Sentinel hash: used when the user doesn't exist so bcrypt.compare always runs,
+// preventing timing-based username enumeration.
+const DUMMY_HASH = '$2b$12$invalidhashthatisneverusedXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+
 export const loginUser = async (data: any) => {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
-  if (!user || !(await bcrypt.compare(data.password, user.password))) throw new Error('Invalid credentials');
+  const hashToCheck = user?.password ?? DUMMY_HASH;
+  const passwordMatch = await bcrypt.compare(data.password, hashToCheck);
+  if (!user || !passwordMatch) throw new Error('Invalid credentials');
 
   const token = generateToken(user.id);
   await logAuditAction(user.id, 'USER_LOGIN', 'User', user.id);
