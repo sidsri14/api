@@ -71,16 +71,13 @@ app.use('/api/', globalLimiter);
 // as x-csrf-token on every state-changing request (double-submit pattern).
 // Validated in csrf.middleware.ts, applied per-route.
 app.get('/api/csrf-token', (req, res) => {
-  let token = req.cookies?.['csrf-token'];
-  if (!token) {
-    token = crypto.randomBytes(32).toString('hex');
-    res.cookie('csrf-token', token, {
-      httpOnly: false,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV !== 'development',
-      maxAge: 7 * 24 * 3600000,
-    });
-  }
+  const token = crypto.randomBytes(32).toString('hex');
+  res.cookie('csrf-token', token, {
+    httpOnly: false,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV !== 'development',
+    maxAge: 7 * 24 * 3600000,
+  });
   res.json({ token });
 });
 

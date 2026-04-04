@@ -53,7 +53,8 @@ async function run() {
       { headers: { 'x-csrf-token': csrfToken, Cookie: csrfCookie } }
     );
     const authCookie = parseCookies(regRes.headers['set-cookie']);
-    authHeaders = { Cookie: authCookie, 'x-csrf-token': csrfToken };
+    // Merge auth JWT cookie with CSRF cookie — both are needed for protected mutating routes
+    authHeaders = { Cookie: csrfCookie + '; ' + authCookie, 'x-csrf-token': csrfToken };
     console.log('   ✓ Registered:', EMAIL);
 
     // ── 3. Add a PaymentSource (required — webhook URL includes sourceId)

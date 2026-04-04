@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { registerUser, loginUser, verifyUserEmail, requestPassReset, completePassReset } from '../services/auth.service.js';
+import { registerUser, loginUser, verifyUserEmail, requestPassReset, completePassReset, updateUserProfile, changeUserPassword } from '../services/auth.service.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { prisma } from '../utils/prisma.js';
 
@@ -59,9 +59,36 @@ export const resetPassword = async (req: Request, res: Response) => {
   } catch (err: any) { errorResponse(res, err.message, err.status || 400); }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const user = await updateUserProfile(req.userId, req.body);
+    successResponse(res, { user });
+  } catch (err: any) {
+    if (err.message === 'Email already in use') return errorResponse(res, err.message, 400);
+    next(err);
+  }
+};
+
+export const updatePassword = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword || newPassword.length < 8) {
+      return errorResponse(res, 'New password must be at least 8 characters', 400);
+    }
+    const result = await changeUserPassword(req.userId, oldPassword, newPassword);
+    successResponse(res, result);
+  } catch (err: any) {
+    if (err.message === 'Incorrect current password') return errorResponse(res, err.message, 401);
+    next(err);
+  }
+};
+
 export const getMe = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const u = await prisma.user.findUnique({ where: { id: req.userId }, select: { id: true, email: true, plan: true, createdAt: true } });
+    const u = await prisma.user.findUnique({ 
+      where: { id: req.userId }, 
+      select: { id: true, email: true, name: true, plan: true, createdAt: true } 
+    });
     if (!u) return errorResponse(res, 'User not found', 404);
     successResponse(res, u);
   } catch (err) { next(err); }

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
 import toast from 'react-hot-toast';
+import { ConfirmModal } from '../components/shared/ConfirmModal';
 
 
 
@@ -152,6 +153,7 @@ const ConnectForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
 const Sources: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
+  const [sourceToDelete, setSourceToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: sources = [], isLoading } = useQuery({
@@ -167,6 +169,7 @@ const Sources: React.FC = () => {
     onSuccess: () => {
       toast.success('Source removed');
       queryClient.invalidateQueries({ queryKey: ['sources'] });
+      setSourceToDelete(null);
     },
     onError: () => toast.error('Failed to remove source'),
   });
@@ -294,11 +297,7 @@ const Sources: React.FC = () => {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <button
-                      onClick={() => {
-                        if (confirm('Remove this Razorpay source? Existing failed payments will not be affected.')) {
-                          deleteMutation.mutate(source.id);
-                        }
-                      }}
+                      onClick={() => setSourceToDelete(source.id)}
                       disabled={deleteMutation.isPending}
                       className="p-2 text-stone-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-all disabled:opacity-50"
                       title="Remove source"
@@ -320,6 +319,17 @@ const Sources: React.FC = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!sourceToDelete}
+        onClose={() => setSourceToDelete(null)}
+        onConfirm={() => sourceToDelete && deleteMutation.mutate(sourceToDelete)}
+        loading={deleteMutation.isPending}
+        title="Remove Source?"
+        message="Are you sure you want to disconnect this Razorpay account? Existing recovery jobs for this source will continue, but no new failures will be tracked."
+        confirmText="Remove"
+        isDestructive
+      />
     </motion.div>
   );
 };

@@ -85,3 +85,38 @@ export const completePassReset = async (token: string, pass: string) => {
   await logAuditAction(u.id, 'PASSWORD_RESET_COMPLETED', 'User', u.id);
   return { message: 'Reset successful' };
 };
+
+export const updateUserProfile = async (userId: string, data: { name?: string; email?: string }) => {
+  const { name, email } = data;
+  
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.id !== userId) throw new Error('Email already in use');
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { name, email },
+    select: { id: true, email: true, name: true, plan: true, createdAt: true }
+  });
+
+  await logAuditAction(userId, 'USER_PROFILE_UPDATED', 'User', userId, { name, email });
+  return user;
+};
+
+export const changeUserPassword = async (userId: string, oldPass: string, newPass: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+
+  const match = await bcrypt.compare(oldPass, user.password);
+  if (!match) throw new Error('Incorrect current password');
+
+  const hashed = await bcrypt.hash(newPass, 12);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashed }
+  });
+
+  await logAuditAction(userId, 'USER_PASSWORD_CHANGED', 'User', userId);
+  return { message: 'Password updated successfully' };
+};

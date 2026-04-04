@@ -19,6 +19,7 @@ const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 export type AuthUser = {
   id: string;
   email: string;
+  name?: string;
   plan: 'free' | 'starter' | 'pro';
   createdAt: string;
 };
@@ -88,7 +89,7 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
 
           <div className="hidden sm:flex flex-col items-end">
             <span className="text-[10px] font-medium text-stone-400 uppercase tracking-wider">Signed in as</span>
-            <span className="text-sm font-semibold text-stone-700 dark:text-stone-200">{user.email}</span>
+            <span className="text-sm font-semibold text-stone-700 dark:text-stone-200">{user.name || user.email}</span>
           </div>
 
           <div className="h-4 w-[1px] bg-warm-border dark:bg-stone-700 hidden sm:block" />
@@ -197,6 +198,8 @@ function App() {
       toast.dismiss(logoutId);
     } finally {
       setUser(null);
+      // Immediately rotate CSRF token after logout to prevent stale submissions on next login
+      api.get('/api/csrf-token').catch(() => {});
     }
   };
 
