@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Zap, ArrowRight, CheckCircle2, TrendingUp, RotateCcw, IndianRupee, Globe, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';

@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { cn } from '../utils/cn';
 import { formatAmount, formatDate, daysSince } from '../utils/format';
 import { StatusBadge } from '../components/dashboard/Badges';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Zap, Copy, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Zap, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
