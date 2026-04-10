@@ -1,6 +1,31 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Zap, ArrowRight, CheckCircle2, TrendingUp, RotateCcw, IndianRupee, Globe, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Zap, ArrowRight, CheckCircle2, TrendingUp, RotateCcw, IndianRupee, Globe, ShieldAlert, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const ThemeToggle = () => {
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  return (
+    <button
+      onClick={() => setIsDark(!isDark)}
+      className="p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all border border-stone-200/60 dark:border-stone-700/60"
+      title="Toggle theme"
+    >
+      {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-stone-500" />}
+    </button>
+  );
+};
 
 const LandingPage = () => {
   return (
@@ -15,10 +40,11 @@ const LandingPage = () => {
             </div>
             <span className="text-xl font-black text-stone-900 dark:text-white tracking-tight">PayRecover</span>
           </div>
-          <div className="flex items-center gap-6">
-            <Link to="/login" className="text-sm font-bold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white transition-colors">SignIn</Link>
-            <Link 
-              to="/register" 
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link to="/login" className="text-sm font-bold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white transition-colors">Sign in</Link>
+            <Link
+              to="/register"
               className="px-6 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-bold rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-stone-900/10 dark:shadow-none"
             >
               Get Started
