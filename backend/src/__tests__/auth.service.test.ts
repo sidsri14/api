@@ -91,7 +91,7 @@ describe('loginUser', () => {
   let hashedPassword: string;
 
   beforeAll(async () => {
-    const bcrypt = await import('bcrypt');
+    const bcrypt = await import('bcryptjs');
     hashedPassword = await bcrypt.default.hash('Secure1@pass', 10);
   });
 

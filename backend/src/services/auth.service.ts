@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import pino from 'pino';
 import { prisma } from '../utils/prisma.js';
 import { generateToken } from '../utils/jwt.js';
