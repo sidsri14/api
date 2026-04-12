@@ -10,14 +10,15 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy dependency files
-COPY package*.json bun.lock* ./
+# Copy dependency files from the backend folder
+# We use a wildcard for the lockfile to handle both bun.lock and bun.lockb
+COPY backend/package*.json backend/bun.lock* ./
 
 # Install dependencies
 RUN bun install
 
 # Copy the rest of the backend code
-COPY . .
+COPY backend/ .
 
 # Generate Prisma Client
 RUN bunx prisma generate
