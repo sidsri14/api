@@ -10,15 +10,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy dependency files using the monorepo path
-# This assumes the Build Context is the root of the repository
-COPY backend/package*.json backend/bun.lock* ./
+# Copy dependency files
+COPY package*.json bun.lock* ./
 
 # Install dependencies
 RUN bun install
 
 # Copy the rest of the backend code
-COPY backend/ .
+COPY . .
 
 # Generate Prisma Client
 RUN bunx prisma generate

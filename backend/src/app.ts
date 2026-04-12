@@ -32,11 +32,38 @@ logger.info({ rawAllowed, parsedAllowed }, 'CORS Configuration Initialized');
 // Enable trust proxy for correct IP detection in cloud environments
 app.set('trust proxy', 1);
 
-// 1. Permissive CORS (Diagnostic Mode)
-app.use(cors()); // Allow everything temporarily to bypass blockage
+// 1. CORS Middleware (Standard for Cross-Domain Vercel <-> Railway)
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+    const whitelist = [...allowed, 'http://localhost:5173'];
+    
+    if (!origin || whitelist.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 
-// 2. Security Middleware (Temporarily Minimal)
-app.use(helmet({ contentSecurityPolicy: false })); 
+// 2. Security Middleware (Standard Hardening)
+app.use(helmet({
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", "https://pay-recover-web-production.up.railway.app", "https://pay-recover.vercel.app"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 
 app.use(morgan('dev'));
 app.use(cookieParser());
