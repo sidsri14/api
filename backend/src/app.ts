@@ -32,7 +32,7 @@ app.use(cors({
     const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
     // Auto-allow localhost and the configured production sites
     const whitelist = [...allowed, 'http://localhost:5173'];
-    
+
     if (!origin || whitelist.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
@@ -40,7 +40,8 @@ app.use(cors({
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
 }));
 
 // 2. Security Middleware
@@ -88,10 +89,13 @@ app.use('/api/', globalLimiter);
 // Validated in csrf.middleware.ts, applied per-route.
 app.get('/api/csrf-token', (_req, res) => {
   const token = crypto.randomBytes(32).toString('hex');
+  const isProd = process.env.NODE_ENV !== 'development';
   res.cookie('csrf-token', token, {
     httpOnly: false,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV !== 'development',
+    // Cross-origin (Vercel → Railway): SameSite=None is required so the browser
+    // sends the cookie back on cross-site requests. Requires Secure=true.
+    sameSite: isProd ? 'none' : 'strict',
+    secure: isProd,
     maxAge: 7 * 24 * 3600000,
   });
   res.json({ token });
