@@ -122,3 +122,14 @@ export const changeUserPassword = async (userId: string, oldPass: string, newPas
   await logAuditAction(userId, 'USER_PASSWORD_CHANGED', 'User', userId);
   return { message: 'Password updated successfully' };
 };
+
+export const setUserPassword = async (userId: string, newPass: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+  if (user.password) throw Object.assign(new Error('Password already set. Use Change Password instead.'), { status: 400 });
+
+  const hashed = await bcrypt.hash(newPass, 12);
+  await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+  await logAuditAction(userId, 'USER_PASSWORD_SET', 'User', userId);
+  return { message: 'Password set successfully' };
+};

@@ -25,7 +25,7 @@ mock.module('../utils/prisma.js', () => ({
 }));
 
 // ─── Imports ─────────────────────────────────────────────────────────────────
-import { registerUser, loginUser } from '../services/auth.service.js';
+import { registerUser, loginUser, setUserPassword } from '../services/auth.service.js';
 
 // ─── registerUser ────────────────────────────────────────────────────────────
 
@@ -133,5 +133,54 @@ describe('loginUser', () => {
     await expect(
       loginUser({ email: 'test@example.com', password: 'WrongPassword1@' })
     ).rejects.toThrow('Invalid credentials');
+  });
+});
+
+// ─── setUserPassword ──────────────────────────────────────────────────────────
+
+describe('setUserPassword', () => {
+  test('throws if user not found', async () => {
+    mockUserFindUnique.mockImplementation(async () => null);
+
+    await expect(
+      setUserPassword('nonexistent-id', 'NewPass1@')
+    ).rejects.toThrow('User not found');
+  });
+
+  test('throws 400 if user already has a password', async () => {
+    mockUserFindUnique.mockImplementation(async () => ({
+      id: 'user-uuid-1',
+      email: 'test@example.com',
+      password: '$2b$12$existinghash',
+      googleId: 'google-123',
+      createdAt: new Date(),
+    }));
+
+    const err = await setUserPassword('user-uuid-1', 'NewPass1@').catch(e => e);
+    expect(err.message).toBe('Password already set. Use Change Password instead.');
+    expect(err.status).toBe(400);
+  });
+
+  test('hashes and saves password for Google-only user', async () => {
+    mockUserFindUnique.mockImplementation(async () => ({
+      id: 'user-uuid-1',
+      email: 'test@example.com',
+      password: null,
+      googleId: 'google-123',
+      createdAt: new Date(),
+    }));
+
+    let savedPassword = '';
+    const { prisma } = await import('../utils/prisma.js');
+    (prisma.user.update as any).mockImplementation(async (args: any) => {
+      savedPassword = args.data.password;
+      return {};
+    });
+
+    const result = await setUserPassword('user-uuid-1', 'NewPass1@');
+
+    expect(result).toEqual({ message: 'Password set successfully' });
+    expect(savedPassword).not.toBe('NewPass1@');
+    expect(savedPassword.startsWith('$2')).toBe(true);
   });
 });
