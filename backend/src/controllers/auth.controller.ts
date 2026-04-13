@@ -91,6 +91,7 @@ export const updatePassword = async (req: AuthRequest, res: Response, next: Next
     successResponse(res, result);
   } catch (err: any) {
     if (err.message === 'Incorrect current password') return errorResponse(res, err.message, 401);
+    if (err.message === 'Account uses Google sign-in — no password to change') return errorResponse(res, err.message, 400);
     next(err);
   }
 };

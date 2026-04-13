@@ -21,7 +21,7 @@ export const findOrCreateGoogleUser = async (profile: GoogleProfile) => {
       // Link the Google account to the existing user
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { googleId: profile.id },
+        data: { googleId: profile.id, emailVerified: true },
       });
     } else {
       // New user — create account (no password)
@@ -31,6 +31,7 @@ export const findOrCreateGoogleUser = async (profile: GoogleProfile) => {
           name: profile.displayName ?? null,
           googleId: profile.id,
           plan: 'free',
+          emailVerified: true,
         },
       });
     }
