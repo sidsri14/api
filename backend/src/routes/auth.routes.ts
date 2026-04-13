@@ -15,7 +15,7 @@ router.post('/login', csrfCheck, authLimiter, validateRequest(loginSchema), logi
 
 // OAuth routes (no CSRF expected on the initial GET or callback redirect)
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
-router.get('/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }), googleAuthCallback);
+router.get('/google/callback', passport.authenticate('google', { session: false, failureRedirect: (process.env.FRONTEND_URL || 'http://localhost:5173') + '/login?error=oauth_failed' }), googleAuthCallback);
 
 router.post('/logout', csrfCheck, logout);
 router.post('/verify-email', csrfCheck, verifyEmail);
