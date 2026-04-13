@@ -19,10 +19,13 @@ import sourceRoutes from './routes/source.routes.js';
 import { billingWebhook } from './controllers/billing.controller.js';
 import { prisma } from './utils/prisma.js';
 import { redisConnection } from './jobs/recovery.queue.js';
+import './config/passport.js';
+import passport from 'passport';
 
 import cors from 'cors';
 
 const app = express();
+app.use(passport.initialize());
 
 // Log CORS configuration on startup
 const rawAllowed = process.env.ALLOWED_ORIGINS || '';

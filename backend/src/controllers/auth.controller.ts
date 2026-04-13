@@ -3,9 +3,10 @@ import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { registerUser, loginUser, verifyUserEmail, requestPassReset, completePassReset, updateUserProfile, changeUserPassword } from '../services/auth.service.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { prisma } from '../utils/prisma.js';
+import { generateToken } from '../utils/jwt.js';
 
 const isProd = process.env.NODE_ENV === 'production';
-const COOKIE_OPS = { 
+export const COOKIE_OPS = { 
   httpOnly: true, 
   secure: isProd, 
   sameSite: (isProd ? 'none' : 'strict') as const, 
@@ -39,6 +40,23 @@ export const logout = (_req: Request, res: Response) => {
   res.clearCookie('token', COOKIE_OPS);
   res.clearCookie('csrf-token', { ...COOKIE_OPS, httpOnly: false });
   successResponse(res, { message: 'Logged out' });
+};
+
+export const googleAuthCallback = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user as any; // From Passport
+    if (!user || !user.id) {
+      return res.redirect((process.env.FRONTEND_URL || 'http://localhost:5173') + '/login?error=oauth_failed');
+    }
+    
+    const token = generateToken(user.id);
+    res.cookie('token', token, COOKIE_OPS);
+    
+    // Redirect to dashboard on successful login
+    res.redirect((process.env.FRONTEND_URL || 'http://localhost:5173') + '/dashboard');
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const verifyEmail = async (req: Request, res: Response) => {
