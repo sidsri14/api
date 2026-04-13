@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { registerUser, loginUser, verifyUserEmail, requestPassReset, completePassReset, updateUserProfile, changeUserPassword } from '../services/auth.service.js';
+import { registerUser, loginUser, verifyUserEmail, requestPassReset, completePassReset, updateUserProfile, changeUserPassword, setUserPassword } from '../services/auth.service.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { prisma } from '../utils/prisma.js';
 import { generateToken } from '../utils/jwt.js';
@@ -112,11 +112,23 @@ export const updatePassword = async (req: AuthRequest, res: Response, next: Next
 
 export const getMe = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const u = await prisma.user.findUnique({ 
-      where: { id: req.userId }, 
-      select: { id: true, email: true, name: true, plan: true, createdAt: true } 
+    const u = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { id: true, email: true, name: true, plan: true, createdAt: true, password: true, googleId: true }
     });
     if (!u) return errorResponse(res, 'User not found', 404);
-    successResponse(res, u);
+    const { password, googleId, ...rest } = u;
+    successResponse(res, { ...rest, hasPassword: password !== null, googleLinked: googleId !== null });
   } catch (err) { next(err); }
+};
+
+export const setPassword = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { password } = req.body;
+    const result = await setUserPassword(req.userId!, password);
+    successResponse(res, result);
+  } catch (err: any) {
+    if (err.status === 400) return errorResponse(res, err.message, 400);
+    next(err);
+  }
 };
