@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FC, FormEvent } from 'react';
 import { Shield, CreditCard, Check, Zap, User, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,6 +17,13 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
   const [securityForm, setSecurityForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [profileLoading, setProfileLoading] = useState(false);
   const [securityLoading, setSecurityLoading] = useState(false);
+  const rzpRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      rzpRef.current?.close();
+    };
+  }, []);
 
   const handleUpdatePlan = async (plan: 'free' | 'pro') => {
     setLoading(true);
@@ -49,6 +56,8 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
         name: 'PayRecover',
         description: 'Pro Recovery Plan — ₹1,499/mo',
         handler: (_response: any) => {
+          rzpRef.current = null;
+          setLoading(false);
           toast.success('Subscription activated! Your plan will update shortly.');
           // Re-fetch user after a short delay to pick up the webhook-updated plan
           setTimeout(() => window.location.reload(), 2000);
@@ -60,14 +69,17 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
         theme: { color: '#059669' },
         modal: {
           ondismiss: () => {
-            toast('Subscription cancelled.', { icon: 'ℹ️' });
-            setLoading(false);
+            if (rzpRef.current) {
+              toast('Checkout closed.', { icon: 'ℹ️' });
+              setLoading(false);
+            }
+            rzpRef.current = null;
           },
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      rzpRef.current = new (window as any).Razorpay(options);
+      rzpRef.current.open();
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || 'Failed to start checkout');
       setLoading(false);
