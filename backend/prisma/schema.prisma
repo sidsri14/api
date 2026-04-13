@@ -26,13 +26,15 @@ model User {
   sources               PaymentSource[]
   failedPayments        FailedPayment[]
   subscriptions         Subscription[]
+  brandSettings         String?         // JSON: { logoUrl, primaryColor, accentColor, companyName, emailSignature }
 }
 
 model Subscription {
   id                  String   @id @default(cuid())
   userId              String
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  razorpaySubscriptionId String @unique
+  providerSubscriptionId String @unique // Genericized from razorpaySubscriptionId
+  provider            String   @default("razorpay")
   plan                String   // "starter" | "pro"
   status              String   @default("created") // created | authenticated | active | cancelled | completed
   currentPeriodStart  DateTime?
@@ -50,9 +52,8 @@ model PaymentSource {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   provider      String         @default("razorpay")
   name          String?
-  keyId         String
-  keySecret     String
-  webhookSecret String
+  credentials   String         // Encrypted JSON blob containing keyId, keySecret, webhookSecret, etc.
+  webhookSecret String         // Keeping this top-level for fast signature verification lookup if possible, or moving to credentials
   createdAt     DateTime       @default(now())
   events        PaymentEvent[]
 
@@ -63,7 +64,7 @@ model PaymentEvent {
   id              String        @id @default(uuid())
   sourceId        String
   source          PaymentSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  razorpayEventId String        @unique
+  providerEventId String        @unique // Genericized from razorpayEventId
   eventType       String
   paymentId       String
   amount          Int
@@ -97,6 +98,7 @@ model FailedPayment {
   nextRetryAt   DateTime?
   lockedAt      DateTime?     // For advisory locking in background jobs
   recoveredAt   DateTime?
+  clickCount    Int           @default(0)
   recoveredVia  String?       // "link" | "external"
   metadata      String?
   createdAt     DateTime      @default(now())

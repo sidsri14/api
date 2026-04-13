@@ -1,12 +1,10 @@
 import type { Job } from 'bullmq';
 import pino from 'pino';
 import { prisma } from '../utils/prisma.js';
-import { RazorpayService } from '../services/RazorpayService.js';
-import { getPaymentLink } from '../services/razorpay.service.js';
-import { getSourceWithSecrets } from '../services/source.service.js';
 import { EmailService } from '../services/EmailService.js';
 import { recoveryQueue } from './recovery.queue.js';
 import { RETRY_DELAYS_MS } from '../services/payment.service.js';
+import { ProviderFactory } from '../providers/ProviderFactory.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 
@@ -56,30 +54,20 @@ export async function processRecoveryJob(job: Job<RecoveryJobData>): Promise<voi
       link = existingLink.url; // reuse existing link so email sends the correct URL
       logger.info({ failedPaymentId }, 'Reusing existing recovery link on job retry');
     } else {
-      // No existing link — create one via Razorpay.
-      // Use per-source credentials when available; fall back to global env credentials for demo payments.
       let generatedLink: string | null = null;
       const sourceId = payment.event?.sourceId;
       if (sourceId) {
         const source = await getSourceWithSecrets(sourceId);
         if (source) {
-          generatedLink = await getPaymentLink(source.keyId, source.keySecret, {
-            amount: payment.amount,
-            currency: payment.currency,
-            customerName: payment.customerName,
-            customerEmail: payment.customerEmail,
-            customerPhone: payment.customerPhone,
-            referenceId: payment.id,
-            description: `Recovery for ${payment.paymentId}`,
-          });
+          const adapter = ProviderFactory.getProvider(source.provider);
+          generatedLink = await adapter.generateRecoveryLink(payment, source);
         }
       }
-      if (!generatedLink) {
-        generatedLink = await RazorpayService.createPaymentLink(payment);
-      }
+
+      // Fallback removed — we now rely strictly on source adapters. 
+      // (Old fallback used RazorpayService.createPaymentLink(payment) with global env keys)
 
       if (!generatedLink) {
-        // Both paths failed (e.g. invalid credentials). Release lock and let BullMQ retry.
         logger.warn({ failedPaymentId }, 'Failed to generate recovery link — will retry');
         throw new Error('Recovery link generation failed');
       }
@@ -94,8 +82,12 @@ export async function processRecoveryJob(job: Job<RecoveryJobData>): Promise<voi
       link = generatedLink;
     }
 
+    // ── Click Tracking ────────────────────────────────────────────────────────
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+    const trackingUrl = `${backendUrl}/api/recovery/track/${failedPaymentId}`;
+
     // 4. Send Email (Initial or Reminder)
-    await EmailService.sendRecoveryEmail(payment, link, payment.retryCount);
+    await EmailService.sendRecoveryEmail(payment, trackingUrl, payment.retryCount);
 
     // 5. Schedule Next Retry or Abandon
     if (payment.retryCount < 2) {

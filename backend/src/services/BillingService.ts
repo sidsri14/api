@@ -35,7 +35,7 @@ export class BillingService {
     await prisma.subscription.create({
       data: {
         userId,
-        razorpaySubscriptionId: subscription.id,
+        providerSubscriptionId: subscription.id,
         plan,
         status: 'created',
       },
@@ -54,10 +54,10 @@ export class BillingService {
     const sub = event?.payload?.subscription?.entity;
     if (!sub?.id) return; // Not a subscription event or malformed payload
 
-    const razorpaySubId = sub.id;
+    const providerSubscriptionId = sub.id;
 
     const existing = await prisma.subscription.findUnique({
-      where: { razorpaySubscriptionId: razorpaySubId },
+      where: { providerSubscriptionId },
     });
 
     if (!existing) return; // Ignore webhooks for unknown subscriptions
@@ -93,7 +93,7 @@ export class BillingService {
     }
 
     await prisma.subscription.update({
-      where: { razorpaySubscriptionId: razorpaySubId },
+      where: { providerSubscriptionId },
       data: {
         status: newStatus,
         cancelledAt,

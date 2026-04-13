@@ -14,20 +14,34 @@ interface PaymentSource {
   id: string;
   provider: string;
   name?: string;
-  keyId: string;
   createdAt: string;
-  webhookUrl: string; // server-computed — never construct this client-side
+  webhookUrl: string;
   _count: { events: number };
+  // credentials are not returned for security, but we might show partial keyId if needed
+  // For now, keyId was removed from schema, but we can store it in metadata if we want.
+  // We'll just show the provider and name.
 }
+
+const PROVIDERS = [
+  { id: 'razorpay', name: 'Razorpay', icon: Zap, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+  { id: 'stripe', name: 'Stripe', icon: Zap, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+];
 
 const ConnectForm: FC<{ onClose: () => void }> = ({ onClose }) => {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: '', keyId: '', keySecret: '', webhookSecret: '' });
+  const [provider, setProvider] = useState<'razorpay' | 'stripe'>('razorpay');
+  const [form, setForm] = useState({ 
+    name: '', 
+    keyId: '', 
+    keySecret: '', 
+    apiKey: '',
+    webhookSecret: '' 
+  });
 
   const mutation = useMutation({
-    mutationFn: (data: typeof form) => api.post('/sources/connect', data),
+    mutationFn: (data: any) => api.post('/sources/connect', data),
     onSuccess: () => {
-      toast.success('Razorpay account connected');
+      toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} account connected`);
       queryClient.invalidateQueries({ queryKey: ['sources'] });
       onClose();
     },
@@ -38,7 +52,7 @@ const ConnectForm: FC<{ onClose: () => void }> = ({ onClose }) => {
   });
 
   const testMutation = useMutation({
-    mutationFn: (data: { keyId: string; keySecret: string }) => api.post('/sources/test-connection', data),
+    mutationFn: (data: any) => api.post('/sources/test-connection', data),
     onSuccess: () => toast.success('Connection verified successfully!'),
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { error?: string } } };
@@ -47,20 +61,36 @@ const ConnectForm: FC<{ onClose: () => void }> = ({ onClose }) => {
   });
 
   const handleTest = () => {
-    if (!form.keyId || !form.keySecret) {
-      toast.error('Key ID and Secret are required to test');
-      return;
+    const data: any = { provider, credentials: {} };
+    if (provider === 'razorpay') {
+      if (!form.keyId || !form.keySecret) return toast.error('Key ID and Secret required');
+      data.credentials = { keyId: form.keyId, keySecret: form.keySecret };
+    } else {
+      if (!form.apiKey) return toast.error('API Key required');
+      data.credentials = { apiKey: form.apiKey };
     }
-    testMutation.mutate({ keyId: form.keyId, keySecret: form.keySecret });
+    testMutation.mutate(data);
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!form.keyId || !form.keySecret || !form.webhookSecret) {
-      toast.error('Key ID, Key Secret, and Webhook Secret are required');
-      return;
+    const data: any = { 
+      provider, 
+      name: form.name, 
+      webhookSecret: form.webhookSecret,
+      credentials: {} 
+    };
+
+    if (provider === 'razorpay') {
+      if (!form.keyId || !form.keySecret) return toast.error('Key ID and Secret required');
+      data.credentials = { keyId: form.keyId, keySecret: form.keySecret };
+    } else {
+      if (!form.apiKey) return toast.error('API Key required');
+      data.credentials = { apiKey: form.apiKey };
     }
-    mutation.mutate(form);
+
+    if (!form.webhookSecret) return toast.error('Webhook Secret is required');
+    mutation.mutate(data);
   };
 
   return (
@@ -68,87 +98,107 @@ const ConnectForm: FC<{ onClose: () => void }> = ({ onClose }) => {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="border border-warm-border dark:border-stone-700 rounded-xl p-6 bg-white dark:bg-stone-800 shadow-soft space-y-4"
+      className="border border-warm-border dark:border-stone-700 rounded-2xl p-6 bg-white dark:bg-stone-800 shadow-xl space-y-6"
     >
-      <h2 className="text-base font-semibold text-stone-700 dark:text-stone-200">Connect Razorpay Account</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-bold text-stone-800 dark:text-stone-100">Connect Payment Source</h2>
+        <div className="flex bg-stone-100 dark:bg-stone-900 p-1 rounded-xl">
+          {PROVIDERS.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setProvider(p.id as any)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                provider === p.id 
+                  ? 'bg-white dark:bg-stone-700 text-stone-800 dark:text-white shadow-sm' 
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-            Display Name <span className="font-normal text-stone-400">(optional)</span>
-          </label>
+          <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Display Name</label>
           <input
             type="text"
-            placeholder="e.g. My Store"
+            placeholder="e.g. My Global Store"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            className="w-full px-4 py-2.5 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900 rounded-lg text-sm outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors text-stone-700 dark:text-stone-200 placeholder:text-stone-300"
+            className="w-full px-4 py-3 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-stone-200 dark:focus:ring-stone-700 transition-all text-stone-700 dark:text-stone-200"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-              Key ID <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="rzp_live_..."
-              value={form.keyId}
-              onChange={e => setForm(f => ({ ...f, keyId: e.target.value }))}
-              required
-              className="w-full px-4 py-2.5 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900 rounded-lg text-sm outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors font-mono text-stone-700 dark:text-stone-200 placeholder:text-stone-300"
-            />
+        {provider === 'razorpay' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Key ID</label>
+              <input
+                type="text"
+                placeholder="rzp_live_..."
+                value={form.keyId}
+                onChange={e => setForm(f => ({ ...f, keyId: e.target.value }))}
+                className="w-full px-4 py-3 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-stone-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Key Secret</label>
+              <input
+                type="password"
+                placeholder="••••••••••••••••"
+                value={form.keySecret}
+                onChange={e => setForm(f => ({ ...f, keySecret: e.target.value }))}
+                className="w-full px-4 py-3 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-stone-200"
+              />
+            </div>
           </div>
+        ) : (
           <div>
-            <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-              Key Secret <span className="text-red-400">*</span>
-            </label>
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Secret API Key</label>
             <input
               type="password"
-              placeholder="••••••••••••••••"
-              value={form.keySecret}
-              onChange={e => setForm(f => ({ ...f, keySecret: e.target.value }))}
-              required
-              className="w-full px-4 py-2.5 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900 rounded-lg text-sm outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors text-stone-700 dark:text-stone-200 placeholder:text-stone-300"
+              placeholder="sk_live_..."
+              value={form.apiKey}
+              onChange={e => setForm(f => ({ ...f, apiKey: e.target.value }))}
+              className="w-full px-4 py-3 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-stone-200"
             />
           </div>
-        </div>
+        )}
 
         <div>
-          <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1.5">
-            Webhook Secret <span className="text-red-400">*</span>
-          </label>
+          <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Webhook Secret</label>
           <input
             type="password"
-            placeholder="From Razorpay Dashboard → Webhooks"
+            placeholder={provider === 'stripe' ? 'whsec_...' : 'From Dashboard'}
             value={form.webhookSecret}
             onChange={e => setForm(f => ({ ...f, webhookSecret: e.target.value }))}
-            required
-            className="w-full px-4 py-2.5 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900 rounded-lg text-sm outline-none focus:border-stone-400 dark:focus:border-stone-500 transition-colors text-stone-700 dark:text-stone-200 placeholder:text-stone-300"
+            className="w-full px-4 py-3 border border-warm-border dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-stone-200"
           />
         </div>
 
-        <div className="flex gap-3 pt-1">
+        <div className="flex gap-3 pt-4 border-t border-stone-100 dark:border-stone-700">
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50"
+            className="flex-1 px-5 py-3 bg-stone-800 hover:bg-stone-900 dark:bg-white dark:hover:bg-stone-100 text-white dark:text-stone-900 font-bold rounded-xl text-sm transition-all disabled:opacity-50"
           >
-            {mutation.isPending ? 'Connecting...' : 'Connect Account'}
+            {mutation.isPending ? 'Connecting...' : 'Connect Source'}
           </button>
           <button
             type="button"
             onClick={handleTest}
             disabled={testMutation.isPending}
-            className="px-5 py-2.5 border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold rounded-lg text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-3 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 font-bold rounded-xl text-sm hover:bg-stone-50 transition-all flex items-center gap-2"
           >
             {testMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            Test Connection
+            Test
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 border border-warm-border dark:border-stone-700 text-stone-600 dark:text-stone-400 font-semibold rounded-lg text-sm hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
+            className="px-5 py-3 text-stone-400 hover:text-stone-600 font-bold text-sm transition-all"
           >
             Cancel
           </button>
@@ -190,24 +240,24 @@ const Sources: FC = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      className="max-w-5xl mx-auto space-y-8 pb-20"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100 tracking-tight">
+          <h1 className="text-4xl font-black text-stone-900 dark:text-white tracking-tighter">
             Payment Sources
           </h1>
-          <p className="text-stone-400 mt-1 font-medium text-xs tracking-wide">
-            Connect your Razorpay accounts to start recovering failed payments
+          <p className="text-stone-400 mt-2 font-medium">
+            Connect Razorpay or Stripe to recover global failed payments automatically.
           </p>
         </div>
         <button
           onClick={() => setShowForm(s => !s)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition-colors"
+          className="group flex items-center gap-2 px-6 py-3.5 bg-stone-900 hover:bg-black dark:bg-white dark:hover:bg-stone-100 text-white dark:text-stone-900 font-black rounded-2xl text-sm transition-all shadow-xl hover:-translate-y-0.5"
         >
-          <Plus className="w-4 h-4" />
-          Connect Razorpay
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+          Add New Source
         </button>
       </div>
 
@@ -216,110 +266,85 @@ const Sources: FC = () => {
         {showForm && <ConnectForm onClose={() => setShowForm(false)} />}
       </AnimatePresence>
 
-      {/* Setup instructions */}
-      <div className="border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl p-5 space-y-2">
-        <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
-          <Zap className="w-4 h-4" /> Setup Instructions
-        </h3>
-        <ol className="text-sm text-blue-600 dark:text-blue-300 space-y-1 list-decimal list-inside">
-          <li>Connect your Razorpay account using the form above</li>
-          <li>Copy the webhook URL shown on your connected source</li>
-          <li>In Razorpay Dashboard → Settings → Webhooks, add the URL</li>
-          <li>Enable events: <code className="font-mono bg-blue-100 dark:bg-blue-900/40 px-1 rounded">payment.failed</code> and <code className="font-mono bg-blue-100 dark:bg-blue-900/40 px-1 rounded">payment.captured</code></li>
-          <li>Use the same webhook secret you entered above</li>
-        </ol>
-      </div>
-
       {/* Sources list */}
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="border border-stone-100 dark:border-stone-800 rounded-xl p-5 bg-white dark:bg-stone-900 shadow-sm animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-stone-100 dark:bg-stone-800 rounded w-1/4" />
-                  <div className="h-3 bg-stone-50 dark:bg-stone-800/50 rounded w-1/2" />
-                </div>
-                <div className="w-20 h-8 rounded-lg bg-stone-100 dark:bg-stone-800" />
-              </div>
-            </div>
+        <div className="grid grid-cols-1 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-40 bg-stone-100 dark:bg-stone-900/50 rounded-3xl animate-pulse" />
           ))}
         </div>
       ) : sources.length === 0 ? (
-        <div className="border border-warm-border dark:border-stone-700 rounded-xl p-16 text-center space-y-3 bg-white dark:bg-stone-800">
-          <div className="w-16 h-16 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center mx-auto">
-            <Zap className="w-8 h-8 text-stone-400" />
+        <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-3xl p-20 text-center space-y-4 bg-stone-50/50 dark:bg-stone-900/20">
+          <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-3xl flex items-center justify-center mx-auto">
+            <Plus className="w-10 h-10 text-stone-300" />
           </div>
-          <h3 className="font-bold text-stone-600 dark:text-stone-300">No sources connected</h3>
-          <p className="text-stone-400 text-sm max-w-sm mx-auto">
-            Connect your Razorpay account to start receiving webhooks and recovering failed payments.
-          </p>
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold text-stone-800 dark:text-stone-200">No sources active</h3>
+            <p className="text-stone-400 text-sm max-w-sm mx-auto font-medium">
+              You haven't connected any payment gateways yet. Click the button above to get started with Stripe or Razorpay.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-6">
           <AnimatePresence>
             {sources.map(source => (
               <motion.div
                 key={source.id}
                 layout
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="border border-warm-border dark:border-stone-700 rounded-xl p-5 bg-white dark:bg-stone-800 shadow-soft"
+                className="group relative border border-warm-border dark:border-stone-800 rounded-3xl p-8 bg-white dark:bg-stone-900 shadow-soft hover:shadow-xl transition-all"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                      <h3 className="font-bold text-stone-800 dark:text-stone-100">
-                        {source.name || 'Razorpay Account'}
-                      </h3>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-600">
-                        {source.provider}
-                      </span>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner ${
+                      source.provider === 'stripe' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'
+                    }`}>
+                      <Zap className="w-8 h-8 fill-current" />
                     </div>
-                    <p className="text-stone-400 text-xs font-mono ml-5">{source.keyId}</p>
-                    <p className="text-stone-400 text-xs ml-5">
-                      {source._count.events} event{source._count.events !== 1 ? 's' : ''} received ·{' '}
-                      Connected {new Date(source.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-2xl font-black text-stone-900 dark:text-white">
+                          {source.name || `${source.provider.charAt(0).toUpperCase() + source.provider.slice(1)} Account`}
+                        </h3>
+                        <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                          source.provider === 'stripe' 
+                            ? 'bg-blue-50 text-blue-500 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' 
+                            : 'bg-emerald-50 text-emerald-500 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                        }`}>
+                          {source.provider}
+                        </span>
+                      </div>
+                      <p className="text-stone-400 text-sm font-medium mt-1">
+                        {source._count.events} events captured · Since {new Date(source.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => copyWebhookUrl(source.webhookUrl)}
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-stone-600 dark:text-stone-300 border border-warm-border dark:border-stone-700 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
-                      title="Copy webhook URL"
+                      className="flex items-center gap-2 px-5 py-3 text-sm font-bold text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-2xl transition-all"
                     >
-                      <Copy className="w-3.5 h-3.5" /> Webhook URL
+                      <Copy className="w-4 h-4" /> Webhook URL
                     </button>
-                    <a
-                      href="https://dashboard.razorpay.com/app/webhooks"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 text-stone-400 hover:text-blue-600 rounded-lg hover:bg-blue-500/10 transition-all"
-                      title="Open Razorpay Webhooks"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
                     <button
                       onClick={() => setSourceToDelete(source.id)}
-                      disabled={deleteMutation.isPending}
-                      className="p-2 text-stone-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-all disabled:opacity-50"
-                      title="Remove source"
+                      className="p-3.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl transition-all"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Webhook URL display */}
-                <div className="mt-4 flex items-center gap-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2">
-                  <span className="text-[10px] font-bold uppercase text-stone-400 shrink-0">Webhook URL</span>
-                  <span className="flex-1 text-xs font-mono text-stone-500 dark:text-stone-400 truncate">
-                    {source.webhookUrl}
-                  </span>
+                <div className="mt-8 pt-6 border-t border-stone-100 dark:border-stone-800 flex items-center gap-3">
+                   <p className="text-xs font-bold text-stone-400 uppercase tracking-widest">Setup Status:</p>
+                   <div className="flex items-center gap-2 text-emerald-500">
+                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                     <span className="text-xs font-bold">Active & Listening</span>
+                   </div>
                 </div>
               </motion.div>
             ))}
@@ -332,13 +357,15 @@ const Sources: FC = () => {
         onClose={() => setSourceToDelete(null)}
         onConfirm={() => sourceToDelete && deleteMutation.mutate(sourceToDelete)}
         loading={deleteMutation.isPending}
-        title="Remove Source?"
-        message="Are you sure you want to disconnect this Razorpay account? Existing recovery jobs for this source will continue, but no new failures will be tracked."
-        confirmText="Remove"
+        title="Disconnect Source?"
+        message="This will immediately stop tracking failed payments from this gateway. Existing recovery links will remain active until they expire."
+        confirmText="Disconnect"
         isDestructive
       />
     </motion.div>
   );
 };
+
+export default Sources;
 
 export default Sources;

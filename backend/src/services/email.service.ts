@@ -56,25 +56,36 @@ async function sendMail(to: string, subject: string, text: string, html?: string
 }
 
 // ── Email Layout ─────────────────────────────────────────────────────────────
+interface BrandingOptions {
+  logoUrl?: string;
+  primaryColor?: string;
+  signature?: string;
+}
 
-const getBaseLayout = (content: string, ctaLink?: string, ctaText?: string) => {
+const getBaseLayout = (content: string, ctaLink?: string, ctaText?: string, branding?: BrandingOptions) => {
+  const primaryColor = branding?.primaryColor || '#10b981';
+  const logo = branding?.logoUrl 
+    ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 40px; width: auto; display: block; margin-bottom: 20px;" />` 
+    : `<span style="font-size: 24px; font-weight: 800; color: ${primaryColor}; letter-spacing: -0.5px;">PayRecover</span>`;
+
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8f8f8; padding: 40px 20px; color: #1a1a1a;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         <div style="padding: 40px;">
           <div style="margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: 800; color: #10b981; letter-spacing: -0.5px;">PayRecover</span>
+            ${logo}
           </div>
           <div style="font-size: 16px; line-height: 1.6; color: #4b5563;">
             ${content}
           </div>
           ${ctaLink ? `
             <div style="margin-top: 32px;">
-              <a href="${ctaLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 16px 32px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);">
+              <a href="${ctaLink}" style="display: inline-block; background-color: ${primaryColor}; color: #ffffff; padding: 16px 32px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.2);">
                 ${ctaText || 'Complete Payment'}
               </a>
             </div>
           ` : ''}
+          ${branding?.signature ? `<div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 14px; color: #9ca3af;">${branding.signature}</div>` : ''}
         </div>
         <div style="padding: 20px 40px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center;">
           <p style="font-size: 12px; color: #9ca3af; margin: 0;">Powered by PayRecover · Automated Failed Payment Recovery</p>
@@ -101,7 +112,8 @@ export const sendPaymentFailedEmail = async (
     currency: string;
     paymentLink: string;
     paymentId: string;
-  }
+  },
+  branding?: BrandingOptions
 ): Promise<void> => {
   const name = params.customerName ? params.customerName.split(' ')[0] : null;
   const greeting = name ? `Hi ${name},` : 'Hi,';
@@ -115,7 +127,8 @@ export const sendPaymentFailedEmail = async (
     `<p>Your payment of <strong>${amt}</strong> couldn't be processed, but we've saved your order details.</p>
      <p>You can complete your payment now in under 10 seconds using the link below. This link is valid for 7 days.</p>`,
     params.paymentLink,
-    'Complete Payment Now'
+    'Complete Payment Now',
+    branding
   );
 
   await sendMail(to, subject, text, html);
@@ -132,7 +145,8 @@ export const sendPaymentReminderEmail = async (
     paymentLink: string;
     dayOffset: number;
     paymentId: string;
-  }
+  },
+  branding?: BrandingOptions
 ): Promise<void> => {
   const name = params.customerName ? params.customerName.split(' ')[0] : null;
   const greeting = name ? `Hi ${name},` : 'Hi,';
@@ -167,7 +181,8 @@ Your spot is still saved. Takes less than a minute.`;
   const html = getBaseLayout(
     `<p>${body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`,
     params.paymentLink,
-    isFinal ? 'Final Chance: Pay Now' : 'Complete Payment'
+    isFinal ? 'Final Chance: Pay Now' : 'Complete Payment',
+    branding
   );
 
   await sendMail(to, subject, text, html);

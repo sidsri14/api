@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FC, FormEvent } from 'react';
-import { Shield, CreditCard, Check, Zap, User, Loader2, Link2 } from 'lucide-react';
+import { Shield, CreditCard, Check, Zap, User, Loader2, Link2, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api, API_URL } from '../api';
 import toast from 'react-hot-toast';
@@ -189,7 +189,33 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
         </div>
       </section>
 
-      {/* Profile Settings */}
+      {/* Branding & Design */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 border-b border-warm-border dark:border-stone-800 pb-4">
+          <Palette className="w-5 h-5 text-stone-400" />
+          <h2 className="text-lg font-bold text-stone-700 dark:text-stone-200">Communication & Branding</h2>
+        </div>
+
+        <div className="bg-white dark:bg-stone-800 border border-warm-border dark:border-stone-700 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-xl transition-all group">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Palette className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-stone-800 dark:text-stone-100">Custom Branding</h3>
+              <p className="text-stone-400 text-sm font-medium mt-1">
+                Customize colors, logos, and signatures for your recovery emails.
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => window.location.href = '/branding'}
+            className="w-full md:w-auto px-8 py-3.5 bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-bold rounded-2xl text-sm transition-all hover:-translate-y-0.5"
+          >
+            Configure Branding
+          </button>
+        </div>
+      </section>
       <section className="space-y-6">
         <div className="flex items-center gap-3 border-b border-warm-border dark:border-stone-800 pb-4">
           <User className="w-5 h-5 text-stone-400" />

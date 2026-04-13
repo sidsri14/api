@@ -6,10 +6,10 @@ import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { z } from 'zod';
 
 const connectSchema = z.object({
-  keyId: z.string().regex(/^rzp_(test|live)_[a-zA-Z0-9]{14,}$/, 'Invalid Razorpay Key ID'),
-  keySecret: z.string().min(20).max(100),
-  webhookSecret: z.string().min(20).max(256),
+  provider: z.enum(['razorpay', 'stripe']),
   name: z.string().max(100).optional(),
+  credentials: z.record(z.string(), z.any()),
+  webhookSecret: z.string().min(10).max(256),
 });
 
 export const connectSource = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -17,23 +17,30 @@ export const connectSource = async (req: AuthRequest, res: Response, next: NextF
     const parsed = connectSchema.safeParse(req.body);
     if (!parsed.success) return errorResponse(res, 'Invalid request body', 400);
 
-    if (!(await validateSourceCredentials(parsed.data.keyId, parsed.data.keySecret))) {
-      return errorResponse(res, 'Invalid Razorpay credentials', 401);
+    const { provider, credentials } = parsed.data;
+
+    // Validate credentials using the provider factory/adapter
+    const isValid = await validateSourceCredentials(provider, credentials);
+    if (!isValid) {
+      return errorResponse(res, `Invalid ${provider} credentials`, 401);
     }
 
     const source = await createPaymentSource(req.userId!, parsed.data);
-    await logAuditAction(req.userId!, 'SOURCE_CREATED', 'PaymentSource', source.id, { name: source.name });
+    await logAuditAction(req.userId!, 'SOURCE_CREATED', 'PaymentSource', source.id, { 
+      name: source.name, 
+      provider: source.provider 
+    });
+    
     successResponse(res, source, 201);
   } catch (err) { next(err); }
 };
 
 export const testConnection = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { keyId, keySecret } = req.body;
-    if (typeof keyId !== 'string' || typeof keySecret !== 'string') return errorResponse(res, 'Key ID and Secret required', 400);
-    if (keyId.length > 100 || keySecret.length > 100) return errorResponse(res, 'Invalid credentials', 400);
+    const { provider, credentials } = req.body;
+    if (!provider || !credentials) return errorResponse(res, 'Provider and credentials required', 400);
 
-    const ok = await validateSourceCredentials(keyId, keySecret);
+    const ok = await validateSourceCredentials(provider, credentials);
     successResponse(res, { message: ok ? 'Verified!' : 'Failed' }, ok ? 200 : 401);
   } catch (err) { next(err); }
 };

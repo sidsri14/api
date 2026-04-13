@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
-import { handleRazorpayWebhook } from '../controllers/webhook.controller.js';
+import { handleUnifiedWebhook } from '../controllers/webhook.controller.js';
 
 const router = Router({ mergeParams: true });
 
@@ -17,6 +17,6 @@ const webhookLimiter = rateLimit({
   validate: false,
 });
 
-router.post('/:sourceId', webhookLimiter, express.raw({ type: 'application/json', limit: '100kb' }), handleRazorpayWebhook);
+router.post('/:provider/:sourceId', webhookLimiter, express.raw({ type: 'application/json', limit: '100kb' }), handleUnifiedWebhook);
 
 export default router;

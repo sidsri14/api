@@ -16,6 +16,7 @@ import billingRoutes from './routes/billing.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import sourceRoutes from './routes/source.routes.js';
+import recoveryRoutes from './routes/recovery.routes.js';
 import { billingWebhook } from './controllers/billing.controller.js';
 import { prisma } from './utils/prisma.js';
 import { redisConnection } from './jobs/recovery.queue.js';
@@ -149,6 +150,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/demo', demoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/sources', sourceRoutes);
+app.use('/api/recovery', recoveryRoutes);
 
 // Error Handling
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {

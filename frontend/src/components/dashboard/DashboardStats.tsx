@@ -11,6 +11,7 @@ interface DashboardStatsProps {
     recoveryRate: number;
     totalFailedAmount: number;
     totalRecoveredAmount: number;
+    totalClicks: number;
   } | null;
 }
 
@@ -24,10 +25,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
       color: 'emerald',
     },
     {
-      label: 'Recovered Amount',
-      value: formatAmount(stats?.totalRecoveredAmount ?? 0),
-      sub: 'Money saved successfully',
-      icon: <IndianRupee className="w-5 h-5 text-blue-500" />,
+      label: 'Link Interactions',
+      value: stats?.totalClicks ?? 0,
+      sub: 'Recovery link clicks',
+      icon: <RotateCcw className="w-5 h-5 text-blue-500" />,
       color: 'blue',
     },
     {

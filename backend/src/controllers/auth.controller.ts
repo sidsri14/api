@@ -114,11 +114,24 @@ export const getMe = async (req: AuthRequest, res: Response, next: NextFunction)
   try {
     const u = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, email: true, name: true, plan: true, createdAt: true, password: true, googleId: true }
+      select: { id: true, email: true, name: true, plan: true, createdAt: true, password: true, googleId: true, brandSettings: true }
     });
     if (!u) return errorResponse(res, 'User not found', 404);
     const { password, googleId, ...rest } = u;
     successResponse(res, { ...rest, hasPassword: password !== null, googleLinked: googleId !== null });
+  } catch (err) { next(err); }
+};
+
+export const updateBranding = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { brandSettings } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data: { brandSettings },
+      select: { id: true, email: true, name: true, plan: true, createdAt: true, brandSettings: true, password: true, googleId: true }
+    });
+    const { password, googleId, ...rest } = user;
+    successResponse(res, { user: { ...rest, hasPassword: password !== null, googleLinked: googleId !== null } });
   } catch (err) { next(err); }
 };
 

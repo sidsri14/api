@@ -12,6 +12,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const PaymentDetails = lazy(() => import('./pages/PaymentDetails'));
 const Sources = lazy(() => import('./pages/Sources'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Branding = lazy(() => import('./pages/Branding'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
@@ -249,6 +250,7 @@ function PageTitle() {
       '/register': 'Create Account | PayRecover',
       '/sources': 'Payment Sources | PayRecover',
       '/settings': 'Settings | PayRecover',
+      '/branding': 'Branding & Design | PayRecover',
       '/forgot-password': 'Reset Password | PayRecover',
       '/reset-password': 'New Password | PayRecover',
       '/verify-email': 'Verify Account | PayRecover',
@@ -339,6 +341,7 @@ function App() {
                     <Route path="/payments/:id" element={<PaymentDetails />} />
                     <Route path="/sources" element={<Sources />} />
                     <Route path="/settings" element={<Settings user={user} onUpdateUser={(u) => setUser(u)} />} />
+                    <Route path="/branding" element={<Branding user={user} onUpdateUser={(u) => setUser(u)} />} />
                     <Route path="*" element={<Navigate to="/dashboard" />} />
                   </Routes>
                 </Layout>

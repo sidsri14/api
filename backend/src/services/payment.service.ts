@@ -12,6 +12,7 @@ export type FailedPaymentWithLinks = Prisma.FailedPaymentGetPayload<{
 const ZERO_METRICS = {
   failedAmount: 0, recoveredAmount: 0, recoveryRate: 0,
   recoveredThisWeek: 0, recoveredThisMonth: 0, recoveredViaLink: 0,
+  totalClicks: 0,
 };
 
 // Exported so recovery.processor.ts can schedule BullMQ jobs with the same delays.
@@ -81,13 +82,14 @@ export const getPaymentMetrics = async (userId: string) => {
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Optimized: Combine basic sums/counts into one groupBy instead of 5 separate aggregates
-    const [statsByStatus, weekRecovered, monthRecovered, viaLinkRecovered] = await Promise.all([
+    const [statsByStatus, weekRecovered, monthRecovered, viaLinkRecovered, clicksAgg] = await Promise.all([
       prisma.failedPayment.groupBy({
         by: ['status'], where: { userId }, _sum: { amount: true }, _count: true 
       }),
       prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredAt: { gte: weekAgo } }, _sum: { amount: true } }),
       prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredAt: { gte: monthAgo } }, _sum: { amount: true } }),
       prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredVia: 'link' }, _sum: { amount: true } }),
+      prisma.failedPayment.aggregate({ where: { userId }, _sum: { clickCount: true } }),
     ]);
 
     const stats = Object.fromEntries(statsByStatus.map(s => [s.status, { sum: s._sum.amount ?? 0, count: s._count }]));
@@ -101,6 +103,7 @@ export const getPaymentMetrics = async (userId: string) => {
       recoveredThisWeek: weekRecovered._sum.amount ?? 0,
       recoveredThisMonth: monthRecovered._sum.amount ?? 0,
       recoveredViaLink: viaLinkRecovered._sum.amount ?? 0,
+      totalClicks: clicksAgg._sum.clickCount ?? 0,
       counts: Object.fromEntries(Object.entries(stats).map(([k, v]) => [k, v.count])),
     };
   } catch (err) {
@@ -120,6 +123,7 @@ export const getFullDashboardStats = async (userId: string) => {
     totalRecoveredAmount: m.recoveredAmount,
     recoveredThisWeek: m.recoveredThisWeek,
     recoveredThisMonth: m.recoveredThisMonth,
+    totalClicks: m.totalClicks,
     counts,
   };
 };
