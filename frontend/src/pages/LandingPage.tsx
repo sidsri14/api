@@ -206,9 +206,9 @@ const LandingPage = () => {
               <span className="text-xl font-black tracking-tight">PayRecover</span>
            </div>
            <div className="flex gap-8 text-sm font-bold text-stone-400">
-              <a href="#" className="hover:text-stone-900 dark:hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-stone-900 dark:hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-stone-900 dark:hover:text-white transition-colors">Contact</a>
+              <Link to="/privacy" className="hover:text-stone-900 dark:hover:text-white transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-stone-900 dark:hover:text-white transition-colors">Terms</Link>
+              <Link to="/contact" className="hover:text-stone-900 dark:hover:text-white transition-colors">Contact</Link>
            </div>
            <p className="text-sm font-bold text-stone-300 dark:text-stone-700">© 2026 PayRecover. All rights reserved.</p>
         </div>

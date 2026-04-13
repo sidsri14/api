@@ -16,6 +16,9 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const PaymentStatus = lazy(() => import('./pages/PaymentStatus'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 export type AuthUser = {
   id: string;
@@ -192,10 +195,15 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
       {children}
     </main>
 
-    <footer className="p-8 border-t border-warm-border dark:border-stone-800 text-center">
+    <footer className="p-8 border-t border-warm-border dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl mx-auto w-full">
       <p className="text-xs font-medium text-stone-400 tracking-wide">
         &copy; 2026 PayRecover
       </p>
+      <div className="flex gap-6 text-xs font-medium text-stone-400">
+        <Link to="/terms" className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">Terms</Link>
+        <Link to="/privacy" className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">Privacy</Link>
+        <Link to="/contact" className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">Contact</Link>
+      </div>
     </footer>
   </div>
   );
@@ -316,6 +324,9 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/payment-status" element={<PaymentStatus />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/contact" element={<Contact />} />
 
             {/* Protected Routes */}
             <Route path="/*" element={

@@ -34,6 +34,23 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
     }
   };
 
+  const handleCheckout = async (plan: 'starter' | 'pro') => {
+    setLoading(true);
+    try {
+      const { data } = await api.post('/billing/create-subscription', { plan });
+      if (data.success && data.data.shortUrl) {
+        window.location.href = data.data.shortUrl;
+      } else {
+        toast.error('Failed to initiate checkout link');
+        setLoading(false);
+      }
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      toast.error(error.response?.data?.error || 'Failed to initiate checkout');
+      setLoading(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     setProfileLoading(true);
@@ -137,7 +154,7 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
               <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Custom branding (coming soon)</li>
             </ul>
             {user.plan === 'free' ? (
-              <button onClick={() => handleUpdatePlan('pro')} disabled={loading} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+              <button onClick={() => handleCheckout('pro')} disabled={loading} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Upgrade to Pro</>}
               </button>
             ) : (
