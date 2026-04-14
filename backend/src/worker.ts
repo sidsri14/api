@@ -15,6 +15,8 @@ DELIVERY_ENV.filter(({ key }) => !process.env[key]).forEach(({ key, impact }) =>
 import { Worker } from 'bullmq';
 import { prisma } from './utils/prisma.js';
 import { processRecoveryJob } from './jobs/recovery.processor.js';
+import { processPruneJob } from './jobs/prune.processor.js';
+import { enqueuePrunePiiJob } from './jobs/recovery.queue.js';
 
 const ABANDON_AFTER_DAYS = 7;
 const ABANDON_INTERVAL_MS = 60 * 60 * 1000; // check every hour
@@ -31,7 +33,12 @@ const workerConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost
 
 const recoveryWorker = new Worker(
   'payment-recovery',
-  processRecoveryJob,
+  async (job) => {
+    if (job.name === 'pii-prune') {
+      return processPruneJob(job);
+    }
+    return processRecoveryJob(job);
+  },
   {
     connection: workerConnection,
     concurrency: 5, // process up to 5 payments in parallel
@@ -105,3 +112,8 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 logger.info('PayRecover Worker — started (BullMQ + Redis)');
 runAbandonCleanup();
+
+// Register daily PII-prune repeatable job (idempotent — BullMQ deduplicates by jobId).
+enqueuePrunePiiJob().catch(err =>
+  logger.error(err, '[PII Prune] Failed to register repeatable job')
+);

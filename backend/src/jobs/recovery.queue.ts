@@ -31,3 +31,26 @@ export async function enqueueRecoveryJob(failedPaymentId: string, delayMs = 0): 
     { delay: delayMs }
   );
 }
+
+/**
+ * Register the daily PII-prune repeatable job.
+ *
+ * Safe to call on every worker startup — BullMQ deduplicates repeatable jobs by
+ * their (name + cron pattern + jobId) fingerprint, so no duplicate schedulers
+ * accumulate across restarts.
+ *
+ * Override the schedule via DATA_PRUNE_CRON env var (default: 02:00 UTC daily).
+ */
+export async function enqueuePrunePiiJob(): Promise<void> {
+  const pattern = process.env.DATA_PRUNE_CRON || '0 2 * * *';
+  await recoveryQueue.add(
+    'pii-prune',
+    {},
+    {
+      repeat: { pattern },
+      jobId: 'pii-prune-daily',
+      removeOnComplete: 30,
+      removeOnFail: 50,
+    }
+  );
+}
