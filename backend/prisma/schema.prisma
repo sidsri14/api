@@ -28,6 +28,7 @@ model User {
   subscriptions         Subscription[]
   memberships           Membership[]
   auditLogs             AuditLog[]
+  webhookEndpoints      WebhookEndpoint[]
   brandSettings         String?         // JSON: { logoUrl, primaryColor, accentColor, companyName, emailSignature }
   brandEmailSubject     String?         // Custom recovery subject
   brandEmailTone        String?         @default("professional") // professional | friendly | urgent
@@ -177,4 +178,18 @@ model Membership {
   @@unique([userId, organizationId])
   @@index([userId])
   @@index([organizationId])
+}
+
+model WebhookEndpoint {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String   @db.VarChar(2048)
+  secret    String   // 32-byte random hex; merchant uses this to verify HMAC-SHA256 signature
+  events    String[] // e.g. ["payment.failed", "payment.recovered", "payment.abandoned"]
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

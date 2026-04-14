@@ -6,6 +6,7 @@ import { recoveryQueue } from './recovery.queue.js';
 import { RETRY_DELAYS_MS } from '../services/payment.service.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
 import { getSourceWithSecrets } from '../services/source.service.js';
+import { OutboundWebhookService } from '../services/OutboundWebhookService.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 
@@ -112,6 +113,10 @@ export async function processRecoveryJob(job: Job<RecoveryJobData>): Promise<voi
         }
       });
       logger.info({ failedPaymentId, retryCount: payment.retryCount + 1 }, 'Scheduled next reminder');
+      void OutboundWebhookService.dispatch(payment.userId, 'payment.retried', {
+        id: payment.id, paymentId: payment.paymentId, amount: payment.amount,
+        currency: payment.currency, retryCount: payment.retryCount + 1,
+      }).catch(() => {});
     } else {
       // Final attempt reached
       await prisma.failedPayment.update({
@@ -119,6 +124,10 @@ export async function processRecoveryJob(job: Job<RecoveryJobData>): Promise<voi
         data: { status: 'abandoned', lockedAt: null }
       });
       logger.info({ failedPaymentId }, 'Max retries reached — abandoned');
+      void OutboundWebhookService.dispatch(payment.userId, 'payment.abandoned', {
+        id: payment.id, paymentId: payment.paymentId, amount: payment.amount,
+        currency: payment.currency, status: 'abandoned',
+      }).catch(() => {});
     }
 
   } catch (err) {

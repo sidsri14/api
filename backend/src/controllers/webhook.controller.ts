@@ -6,6 +6,7 @@ import { logAuditAction } from '../services/audit.service.js';
 import { prisma } from '../utils/prisma.js';
 import { enqueueRecoveryJob } from '../jobs/recovery.queue.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
+import { OutboundWebhookService } from '../services/OutboundWebhookService.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 
@@ -106,6 +107,9 @@ const handleFail = async (srcId: string, uId: string, data: any) => {
       void enqueueRecoveryJob(fp.id).catch((err) =>
         logger.error({ failedPaymentId: fp.id, err }, 'Job enqueue failed')
       );
+      void OutboundWebhookService.dispatch(uId, 'payment.failed', {
+        id: fp.id, paymentId: fp.paymentId, amount: fp.amount, currency: fp.currency, status: fp.status,
+      }).catch(() => {});
     }
   });
 

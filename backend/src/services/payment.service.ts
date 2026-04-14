@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import pino from 'pino';
 import { prisma } from '../utils/prisma.js';
 import { logAuditAction } from './audit.service.js';
+import { OutboundWebhookService } from './OutboundWebhookService.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 
@@ -62,11 +63,15 @@ export const getPaymentDetails = (userId: string, id: string) =>
   });
 
 export const markPaymentRecovered = async (failedPaymentId: string, userId: string, via: 'link' | 'external' = 'link') => {
-  await prisma.failedPayment.update({
+  const updated = await prisma.failedPayment.update({
     where: { id: failedPaymentId },
     data: { status: 'recovered', recoveredAt: new Date(), recoveredVia: via },
   });
   await logAuditAction(userId, 'PAYMENT_RECOVERED', 'FailedPayment', failedPaymentId, { via });
+  void OutboundWebhookService.dispatch(userId, 'payment.recovered', {
+    id: updated.id, paymentId: updated.paymentId, amount: updated.amount,
+    currency: updated.currency, status: updated.status, recoveredAt: updated.recoveredAt, recoveredVia: via,
+  }).catch(() => {});
 };
 
 export const triggerManualRetry = async (userId: string, id: string) => {
