@@ -29,6 +29,7 @@ model User {
   memberships           Membership[]
   auditLogs             AuditLog[]
   webhookEndpoints      WebhookEndpoint[]
+  apiKeys               ApiKey[]
   brandSettings         String?         // JSON: { logoUrl, primaryColor, accentColor, companyName, emailSignature }
   brandEmailSubject     String?         // Custom recovery subject
   brandEmailTone        String?         @default("professional") // professional | friendly | urgent
@@ -178,6 +179,21 @@ model Membership {
   @@unique([userId, organizationId])
   @@index([userId])
   @@index([organizationId])
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String    @db.VarChar(100)
+  keyHash    String    @unique // SHA-256(rawKey) hex — used for constant-time lookup
+  prefix     String            // first 11 chars of raw key (e.g. "pr_a1b2c3d4") for display
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model WebhookEndpoint {

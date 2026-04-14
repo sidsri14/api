@@ -29,19 +29,26 @@ export class NotificationService {
     await EmailService.sendRecoveryEmail(payment, trackingUrl, retryCount);
     logger.info({ paymentId: payment.id, retryCount, channel: 'email' }, 'Dispatched Email Recovery');
 
-    // Dispatch SMS/WhatsApp for Pro users on later attempts or if phone exists
-    if (user?.plan === 'pro' && customerPhone) {
-      // We'll add SMS on the 3rd attempt (retryCount === 2) to increase pressure/utility
-      if (retryCount >= 2) {
-        await SmsService.sendRecoverySms(
-          customerPhone,
-          payment.customerName || 'there',
-          payment.amount,
-          payment.currency || 'INR',
-          trackingUrl
-        );
-        logger.info({ paymentId: payment.id, retryCount, channel: 'sms' }, 'Dispatched SMS Recovery');
-      }
+    // Dispatch SMS + WhatsApp for Pro users on the final attempt (retryCount >= 2)
+    if (user?.plan === 'pro' && customerPhone && retryCount >= 2) {
+      await SmsService.sendRecoverySms(
+        customerPhone,
+        payment.customerName || 'there',
+        payment.amount,
+        payment.currency || 'INR',
+        trackingUrl
+      );
+      logger.info({ paymentId: payment.id, retryCount, channel: 'sms' }, 'Dispatched SMS Recovery');
+
+      // WhatsApp: fires only if TWILIO_WHATSAPP_FROM is configured with whatsapp: prefix
+      await SmsService.sendRecoveryWhatsApp(
+        customerPhone,
+        payment.customerName || 'there',
+        payment.amount,
+        payment.currency || 'INR',
+        trackingUrl
+      );
+      logger.info({ paymentId: payment.id, retryCount, channel: 'whatsapp' }, 'Dispatched WhatsApp Recovery');
     }
   }
 }

@@ -4,10 +4,11 @@ import IORedis from 'ioredis';
 
 // Warn about delivery-channel env vars at worker startup (worker is where emails/SMS fire).
 const DELIVERY_ENV: Array<{ key: string; impact: string }> = [
-  { key: 'SMTP_HOST',          impact: 'Recovery emails will print to console only' },
-  { key: 'TWILIO_SID',         impact: 'Pro-plan SMS (3rd attempt) will be skipped' },
-  { key: 'TWILIO_AUTH_TOKEN',  impact: 'Pro-plan SMS (3rd attempt) will be skipped' },
-  { key: 'TWILIO_FROM_NUMBER', impact: 'Pro-plan SMS (3rd attempt) will be skipped' },
+  { key: 'SMTP_HOST',             impact: 'Recovery emails will print to console only' },
+  { key: 'TWILIO_SID',            impact: 'Pro-plan SMS/WhatsApp (3rd attempt) will be skipped' },
+  { key: 'TWILIO_AUTH_TOKEN',     impact: 'Pro-plan SMS/WhatsApp (3rd attempt) will be skipped' },
+  { key: 'TWILIO_FROM_NUMBER',    impact: 'Pro-plan SMS (3rd attempt) will be skipped' },
+  { key: 'TWILIO_WHATSAPP_FROM',  impact: 'Pro-plan WhatsApp (3rd attempt) will be skipped (optional)' },
 ];
 DELIVERY_ENV.filter(({ key }) => !process.env[key]).forEach(({ key, impact }) =>
   console.warn(`[Worker] ⚠  ${key} not set: ${impact}`)
