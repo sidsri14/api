@@ -1,6 +1,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { BaseProvider, PaymentEventData } from './BaseProvider.js';
+import { BaseProvider } from './BaseProvider.js';
+import type { PaymentEventData } from './BaseProvider.js';
 
 export class RazorpayProvider extends BaseProvider {
   private getRazorpay(keyId: string, keySecret: string): Razorpay {

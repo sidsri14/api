@@ -30,6 +30,9 @@ export type AuthUser = {
   createdAt: string;
   hasPassword: boolean;
   googleLinked: boolean;
+  brandSettings?: string | null;
+  brandEmailSubject?: string | null;
+  brandEmailTone?: string | null;
 };
 
 const PageLoader = () => (

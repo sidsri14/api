@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, RotateCcw, CheckCircle2, Smartphone, Monitor } from 'lucide-react';
+import { TrendingUp, RotateCcw, CheckCircle2, Smartphone } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface DashboardStatsProps {

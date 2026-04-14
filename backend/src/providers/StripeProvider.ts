@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
-import { BaseProvider, PaymentEventData } from './BaseProvider.js';
+import { BaseProvider } from './BaseProvider.js';
+import type { PaymentEventData } from './BaseProvider.js';
 
 export class StripeProvider extends BaseProvider {
   private getStripe(apiKey: string): Stripe {

@@ -1,5 +1,4 @@
-import React from 'react';
-import { ShieldCheck, FileText, Scale, Lock } from 'lucide-react';
+import { Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Terms = () => {

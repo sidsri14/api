@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCw, IndianRupee, AlertTriangle, Download } from 'lucide-react';
+import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { formatAmount } from '../utils/format';

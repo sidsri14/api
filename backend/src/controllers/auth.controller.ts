@@ -9,7 +9,7 @@ const isProd = process.env.NODE_ENV === 'production';
 export const COOKIE_OPS = { 
   httpOnly: true, 
   secure: isProd, 
-  sameSite: (isProd ? 'none' : 'strict') as const, 
+  sameSite: (isProd ? 'none' : 'strict') as 'none' | 'strict',
   path: '/', 
   maxAge: 7 * 24 * 3600000 
 };

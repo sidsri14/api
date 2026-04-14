@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { Palette, Type, Image as ImageIcon, Check, Loader2, Save, Eye } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Type, Image as ImageIcon, Loader2, Save, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { api } from '../api';
 import toast from 'react-hot-toast';
 import type { AuthUser } from '../App';

@@ -21,7 +21,7 @@ export const handleUnifiedWebhook = async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Unknown source' });
   }
 
-  if (source.provider !== provider?.toLowerCase()) {
+  if (source.provider !== String(provider || '').toLowerCase()) {
     logger.warn({ sourceId, expected: source.provider, received: provider }, 'Webhook rejected: Provider mismatch');
     return res.status(400).json({ error: 'Provider mismatch' });
   }

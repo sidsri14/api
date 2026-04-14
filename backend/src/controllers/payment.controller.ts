@@ -48,7 +48,7 @@ export const exportPayments = async (req: AuthRequest, res: Response, next: Next
     const payments = await prisma.failedPayment.findMany({
       where: { userId: req.userId!, status: 'recovered' },
       orderBy: { recoveredAt: 'desc' },
-      include: { source: true },
+      include: { event: { include: { source: true } } },
     });
 
     let csv = 'Date,Customer,Email,Amount,Currency,Source,Platform ID\n';
@@ -57,7 +57,7 @@ export const exportPayments = async (req: AuthRequest, res: Response, next: Next
       const name = (p.customerName || 'N/A').replace(/,/g, '');
       const email = p.customerEmail;
       const amt = (p.amount / 100).toFixed(2);
-      const source = (p.source?.name || p.source?.type || 'N/A').replace(/,/g, '');
+      const source = (p.event?.source?.name || p.event?.source?.provider || 'N/A').replace(/,/g, '');
       csv += `${date},${name},${email},${amt},${p.currency},${source},${p.paymentId}\n`;
     });
 

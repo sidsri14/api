@@ -45,8 +45,8 @@ export const createOrganization = async (req: AuthRequest, res: Response, next: 
 
 export const getOrgMembers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { orgId } = req.params;
-    
+    const orgId = String(req.params.orgId || '');
+
     // Check if user has access to this org
     const membership = await prisma.membership.findFirst({
       where: { userId: req.userId!, organizationId: orgId },
@@ -65,7 +65,7 @@ export const getOrgMembers = async (req: AuthRequest, res: Response, next: NextF
 
 export const inviteUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { orgId } = req.params;
+    const orgId = String(req.params.orgId || '');
     const { email, role } = req.body;
 
     if (!email || !role) return errorResponse(res, 'Email and role are required', 400);

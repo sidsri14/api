@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Shield, Mail, Trash2, CheckCircle2, ChevronRight, Loader2, Send, Building2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, UserPlus, Shield, Trash2, CheckCircle2, ChevronRight, Loader2, Send, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
 import { toast } from 'react-hot-toast';
-import { cn } from '../utils/cn';
 
 const Team = () => {
   const [loading, setLoading] = useState(true);

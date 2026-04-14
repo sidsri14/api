@@ -5,6 +5,7 @@ import { NotificationService } from '../services/NotificationService.js';
 import { recoveryQueue } from './recovery.queue.js';
 import { RETRY_DELAYS_MS } from '../services/payment.service.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
+import { getSourceWithSecrets } from '../services/source.service.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 

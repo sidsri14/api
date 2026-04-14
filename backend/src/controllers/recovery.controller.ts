@@ -7,7 +7,7 @@ import { logAuditAction } from '../services/audit.service.js';
  * Redirects to the actual payment link while logging analytics.
  */
 export const trackClick = async (req: Request, res: Response) => {
-  const { failedPaymentId } = req.params;
+  const failedPaymentId = String(req.params.failedPaymentId || '');
 
   try {
     const payment = await prisma.failedPayment.findUnique({
@@ -20,8 +20,13 @@ export const trackClick = async (req: Request, res: Response) => {
     }
 
     // 1. Gather Analytics Metadata
-    const userAgent = req.headers['user-agent'] || 'Unknown';
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown';
+    const userAgentRaw = req.headers['user-agent'];
+    const userAgent = Array.isArray(userAgentRaw) ? userAgentRaw[0] : (userAgentRaw || 'Unknown');
+    
+    // X-Forwarded-For can be a string, array, or undefined. Handle all cases.
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    const forwardedIp = Array.isArray(xForwardedFor) ? xForwardedFor[0] : (xForwardedFor || '');
+    const ip = forwardedIp || req.socket.remoteAddress || 'Unknown';
 
     // 2. Increment click count and log metadata
     await prisma.failedPayment.update({
@@ -38,7 +43,11 @@ export const trackClick = async (req: Request, res: Response) => {
     });
 
     // 4. Redirect to the source provider's actual recovery link
-    res.redirect(payment.recoveryLinks[0].url);
+    const recoveryLink = (payment as any).recoveryLinks?.[0];
+    if (!recoveryLink) {
+      return res.status(404).json({ error: 'Source recovery link not found' });
+    }
+    res.redirect(recoveryLink.url);
   } catch (err) {
     console.error('Track Click Error:', err);
     res.status(500).json({ error: 'Failed to process redirect' });

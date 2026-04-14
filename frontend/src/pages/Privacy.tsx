@@ -1,4 +1,3 @@
-import React from 'react';
 import { Lock, ShieldCheck, EyeOff, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
 
