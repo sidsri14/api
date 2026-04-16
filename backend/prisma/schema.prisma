@@ -127,6 +127,7 @@ model RecoveryLink {
   failedPayment   FailedPayment @relation(fields: [failedPaymentId], references: [id], onDelete: Cascade)
   url             String
   expiresAt       DateTime?     // Expiration metadata for the recovery link
+  usedAt          DateTime?     // set when the recovery link is first clicked
   createdAt       DateTime      @default(now())
 
   @@index([failedPaymentId])
@@ -140,6 +141,8 @@ model Reminder {
   dayOffset       Int
   sentAt          DateTime      @default(now())
   status          String        @default("sent")
+  deliveryStatus  String        @default("sent")  // "sent" | "failed"
+  failedAt        DateTime?
 
   @@index([failedPaymentId])
 }
