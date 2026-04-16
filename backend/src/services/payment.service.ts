@@ -118,6 +118,36 @@ export const getPaymentMetrics = async (userId: string) => {
   }
 };
 
+export const getTimeseriesMetrics = async (userId: string, days = 30) => {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const payments = await prisma.failedPayment.findMany({
+    where: { userId, createdAt: { gte: startDate } },
+    select: { amount: true, status: true, createdAt: true }
+  });
+
+  const timeseriesMap = new Map<string, { date: string, failed: number, recovered: number }>();
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0] as string;
+    timeseriesMap.set(dateStr, { date: dateStr, failed: 0, recovered: 0 });
+  }
+
+  payments.forEach(p => {
+    const dateStr = p.createdAt.toISOString().split('T')[0] as string;
+    const stat = timeseriesMap.get(dateStr);
+    if (stat) {
+      if (p.status === 'recovered') stat.recovered += p.amount;
+      else stat.failed += p.amount;
+    }
+  });
+
+  return Array.from(timeseriesMap.values());
+};
+
 export const getFullDashboardStats = async (userId: string) => {
   const m = await getPaymentMetrics(userId);
   const counts = { pending: 0, retrying: 0, recovered: 0, abandoned: 0, ...m.counts };
@@ -137,6 +167,8 @@ export const getFullDashboardStats = async (userId: string) => {
     } catch (e) {}
   });
 
+  const timeseries = await getTimeseriesMetrics(userId, 30);
+
   return {
     totalFailed: (counts.pending || 0) + (counts.retrying || 0),
     totalRecovered: counts.recovered || 0,
@@ -147,6 +179,7 @@ export const getFullDashboardStats = async (userId: string) => {
     recoveredThisMonth: m.recoveredThisMonth,
     totalClicks: m.totalClicks,
     counts,
-    platformBreakdown
+    platformBreakdown,
+    timeseries
   };
 };

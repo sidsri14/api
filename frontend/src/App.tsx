@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 
-import { Moon, Sun, LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users, Webhook, KeyRound } from 'lucide-react';
+import { Moon, Sun, LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users, Webhook, KeyRound, Shield } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { api } from './api';
 
@@ -24,6 +24,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Team = lazy(() => import('./pages/Team'));
 const Webhooks = lazy(() => import('./pages/Webhooks'));
 const ApiKeys = lazy(() => import('./pages/ApiKeys'));
+const Security = lazy(() => import('./pages/Security'));
 
 export type AuthUser = {
   id: string;
@@ -76,6 +77,7 @@ const MobileNav = ({ user, onLogout }: { user: AuthUser; onLogout: () => void })
     { label: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
     { label: 'Sources', icon: Link2, path: '/sources' },
     { label: 'Team', icon: Users, path: '/team' },
+    { label: 'Security', icon: Shield, path: '/security' },
     { label: 'Webhooks', icon: Webhook, path: '/webhooks' },
     { label: 'API Keys', icon: KeyRound, path: '/api-keys' },
     { label: 'Settings', icon: SettingsIcon, path: '/settings' },
@@ -180,6 +182,13 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
             </button>
 
             <button
+              onClick={() => navigate('/security')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
+            >
+              <Shield className="w-4 h-4" /> Security
+            </button>
+
+            <button
               onClick={() => navigate('/webhooks')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
             >
@@ -257,6 +266,7 @@ function PageTitle() {
       '/team': 'Team Management | PayRecover',
       '/settings': 'Settings | PayRecover',
       '/branding': 'Branding & Design | PayRecover',
+      '/security': 'Security & Audit | PayRecover',
       '/webhooks': 'Webhooks | PayRecover',
       '/api-keys': 'API Keys | PayRecover',
       '/forgot-password': 'Reset Password | PayRecover',
@@ -351,6 +361,7 @@ function App() {
                     <Route path="/team" element={<Team />} />
                     <Route path="/settings" element={<Settings user={user} onUpdateUser={(u) => setUser(u)} />} />
                     <Route path="/branding" element={<Branding user={user} onUpdateUser={(u) => setUser(u)} />} />
+                    <Route path="/security" element={<Security />} />
                     <Route path="/webhooks" element={<Webhooks />} />
                     <Route path="/api-keys" element={<ApiKeys />} />
                     <Route path="*" element={<Navigate to="/dashboard" />} />
