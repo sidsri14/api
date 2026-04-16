@@ -141,7 +141,6 @@ model Reminder {
   dayOffset       Int
   sentAt          DateTime      @default(now())
   status          String        @default("sent")
-  deliveryStatus  String        @default("sent")  // "sent" | "failed"
   failedAt        DateTime?
 
   @@index([failedPaymentId])

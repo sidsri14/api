@@ -1,5 +1,4 @@
--- AlterTable: Add deliveryStatus and failedAt to Reminder
-ALTER TABLE "Reminder" ADD COLUMN "deliveryStatus" TEXT NOT NULL DEFAULT 'sent';
+-- AlterTable: Add failedAt to Reminder
 ALTER TABLE "Reminder" ADD COLUMN "failedAt" TIMESTAMP(3);
 
 -- AlterTable: Add usedAt to RecoveryLink
