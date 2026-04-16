@@ -38,8 +38,6 @@ export const connectSource = async (req: AuthRequest, res: Response, next: NextF
 export const testConnection = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { provider, credentials } = req.body;
-    if (!provider || !credentials) return errorResponse(res, 'Provider and credentials required', 400);
-
     const ok = await validateSourceCredentials(provider, credentials);
     successResponse(res, { message: ok ? 'Verified!' : 'Failed' }, ok ? 200 : 401);
   } catch (err) { next(err); }
