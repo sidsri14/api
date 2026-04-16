@@ -35,8 +35,8 @@ const workerConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost
 // Upstash may reject CONFIG GET; treat that as a debug-level non-issue.
 async function checkRedisEvictionPolicy(): Promise<void> {
   try {
-    const result = await workerConnection.config('GET', 'maxmemory-policy');
-    const policy = result[1] as string | undefined;
+    const result = await workerConnection.config('GET', 'maxmemory-policy') as string[];
+    const policy = result[1];
     if (policy && policy !== 'noeviction') {
       logger.warn(
         `[Worker] Redis maxmemory-policy is "${policy}" — expected "noeviction". Jobs may be silently dropped! Fix in Upstash dashboard: Configuration → Eviction Policy → noeviction`
