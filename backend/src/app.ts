@@ -39,6 +39,9 @@ const rawAllowed = process.env.ALLOWED_ORIGINS || '';
 const parsedAllowed = rawAllowed.split(',').map(o => o.trim()).filter(Boolean);
 logger.info({ rawAllowed, parsedAllowed }, 'CORS Configuration Initialized');
 
+// Build CSP connect-src from env so it stays valid across domain changes
+const cspConnectSrc = ["'self'", ...parsedAllowed, 'http://localhost:5173'].filter(Boolean);
+
 // Enable trust proxy for correct IP detection in cloud environments
 app.set('trust proxy', 1);
 
@@ -67,7 +70,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", "https://pay-recover-web-production.up.railway.app", "https://pay-recover.vercel.app"],
+      connectSrc: cspConnectSrc,
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],
@@ -79,7 +82,7 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 
 // Webhook routes need raw body for signature verification
-app.use('/api/webhooks/razorpay', webhookRoutes);
+app.use('/api/webhooks', webhookRoutes);
 app.post('/api/webhooks/billing/razorpay', express.raw({ type: 'application/json' }), billingWebhook);
 app.post('/api/webhooks/billing/stripe', express.raw({ type: 'application/json' }), stripeBillingWebhook);
 
