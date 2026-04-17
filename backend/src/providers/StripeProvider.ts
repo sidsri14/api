@@ -86,29 +86,44 @@ export class StripeProvider extends BaseProvider {
       const type = event.type;
       const data = event.data.object;
 
-      if (type === 'charge.failed' || type === 'payment_intent.payment_failed') {
+      if (type === 'charge.failed' || type === 'payment_intent.payment_failed' || type === 'invoice.payment_failed') {
+        const paymentIntent = type === 'invoice.payment_failed' ? data.payment_intent : data.id;
         return {
           providerEventId: event.id,
           eventType: 'payment.failed',
           paymentId: data.id,
           orderId: data.payment_intent || data.id,
-          amount: data.amount,
+          amount: data.amount || data.amount_due || 0,
           currency: data.currency,
-          customerEmail: data.receipt_email || data.billing_details?.email,
-          customerPhone: data.billing_details?.phone,
-          customerName: data.billing_details?.name,
+          customerEmail: data.receipt_email || data.billing_details?.email || data.customer_email || '',
+          customerPhone: data.billing_details?.phone || data.customer_phone || '',
+          customerName: data.billing_details?.name || data.customer_name || '',
           status: 'failed',
           rawData: JSON.stringify(body),
         };
       }
 
-      if (type === 'charge.succeeded' || type === 'checkout.session.completed') {
+      if (type === 'customer.subscription.deleted') {
+        // This is a terminal failure for a subscription
+        return {
+          providerEventId: event.id,
+          eventType: 'payment.failed',
+          paymentId: data.id, // Subscription ID
+          amount: 0,
+          currency: 'usd',
+          customerEmail: data.customer_email || '',
+          status: 'failed',
+          rawData: JSON.stringify(body),
+        };
+      }
+
+      if (type === 'charge.succeeded' || type === 'checkout.session.completed' || type === 'invoice.paid') {
         return {
           providerEventId: event.id,
           eventType: 'payment.captured',
           paymentId: data.id,
-          failedPaymentId: data.metadata?.failedPaymentId, // Essential for recovery tracking
-          amount: data.amount || data.amount_total,
+          failedPaymentId: data.metadata?.failedPaymentId,
+          amount: data.amount || data.amount_total || data.amount_paid,
           currency: data.currency,
           customerEmail: data.receipt_email || data.customer_details?.email || data.customer_email,
           status: 'captured',

@@ -77,18 +77,24 @@ export class RazorpayProvider extends BaseProvider {
       const event = body.event;
       const payload = body.payload;
 
-      // Handle failed payments
-      if (event === 'payment.failed') {
-        const payment = payload.payment.entity;
+      // Handle failed payments (one-time and subscriptions)
+      if (event === 'payment.failed' || event === 'subscription.pending' || event === 'subscription.halted') {
+        const payment = event === 'payment.failed' ? payload.payment.entity : payload.payment?.entity;
+        const subscription = payload.subscription?.entity;
+        
+        // Use subscription data if it's a subscription event, otherwise fallback to payment
+        const entity = payment || subscription;
+        if (!entity) return null;
+
         return {
           providerEventId: body.id,
           eventType: 'payment.failed',
-          paymentId: payment.id,
-          orderId: payment.order_id,
-          amount: payment.amount,
-          currency: payment.currency,
-          customerEmail: payment.email,
-          customerPhone: payment.contact,
+          paymentId: entity.id,
+          orderId: entity.order_id || entity.id,
+          amount: entity.amount || entity.total_amount || 0,
+          currency: entity.currency || 'INR',
+          customerEmail: entity.email || payload.customer?.entity?.email || '',
+          customerPhone: entity.contact || payload.customer?.entity?.contact || '',
           status: 'failed',
           rawData: JSON.stringify(body),
         };

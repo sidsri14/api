@@ -99,6 +99,16 @@ const runAbandonCleanup = async (): Promise<void> => {
     if (toAbandon.length) {
       const ids = toAbandon.map(p => p.id);
       await prisma.failedPayment.updateMany({ where: { id: { in: ids } }, data: { status: 'abandoned' } });
+      
+      // Dispatch outbound webhooks for each abandoned payment
+      await Promise.allSettled(
+        toAbandon.map(p => 
+          OutboundWebhookService.dispatch(p.userId, 'payment.abandoned', {
+            id: p.id, paymentId: p.paymentId, status: 'abandoned'
+          })
+        )
+      );
+
       await prisma.auditLog.createMany({
         data: toAbandon.map(p => ({
           userId: p.userId,
@@ -107,7 +117,7 @@ const runAbandonCleanup = async (): Promise<void> => {
           resourceId: p.id,
         })),
       });
-      logger.info(`Abandoned ${toAbandon.length} payment(s)`);
+      logger.info(`Abandoned ${toAbandon.length} payment(s) and dispatched notifications`);
     }
   } catch (err) {
     logger.error(err, 'Abandon cleanup error');
