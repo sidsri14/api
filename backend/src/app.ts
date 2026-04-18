@@ -24,6 +24,7 @@ import auditRoutes from './routes/audit.routes.js';
 import contactRoutes from './routes/contact.routes.js';
 import { Queue } from 'bullmq';
 import { billingWebhook, stripeBillingWebhook } from './controllers/billing.controller.js';
+import { requireAuth } from './middleware/auth.middleware.js';
 import { prisma } from './utils/prisma.js';
 import { redisConnection } from './jobs/recovery.queue.js';
 import './config/passport.js';
@@ -169,13 +170,7 @@ app.get('/health', async (_req, res) => {
 });
 
 // Queue Stats (authenticated — for dashboard use)
-app.get('/api/queue/stats', async (req, res) => {
-  // Lightweight auth: check cookie or x-api-key (reuse requireAuth inline)
-  const token = req.cookies?.token;
-  const apiKeyHeader = req.headers['x-api-key'] as string | undefined;
-  if (!token && !apiKeyHeader) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
-  }
+app.get('/api/queue/stats', requireAuth, async (req, res) => {
   try {
     const queue = new Queue('payment-recovery', { connection: redisConnection });
     const counts = await queue.getJobCounts('waiting', 'active', 'failed', 'delayed', 'completed');

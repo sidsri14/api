@@ -64,10 +64,17 @@ interface BrandingOptions {
   emailTone?: 'professional' | 'friendly' | 'urgent';
 }
 
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+const safeColor = (c?: string) => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c! : '#10b981';
+const safeHttpsUrl = (u?: string) => { try { const p = new URL(u || ''); return p.protocol === 'https:' ? u! : null; } catch { return null; } };
+
 const getBaseLayout = (content: string, ctaLink?: string, ctaText?: string, branding?: BrandingOptions) => {
-  const primaryColor = branding?.primaryColor || '#10b981';
-  const logo = branding?.logoUrl 
-    ? `<img src="${branding.logoUrl}" alt="Logo" style="height: 40px; width: auto; display: block; margin-bottom: 20px;" />` 
+  const primaryColor = safeColor(branding?.primaryColor);
+  const logoUrl = safeHttpsUrl(branding?.logoUrl);
+  const logo = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="Logo" style="height: 40px; width: auto; display: block; margin-bottom: 20px;" />`
     : `<span style="font-size: 24px; font-weight: 800; color: ${primaryColor}; letter-spacing: -0.5px;">PayRecover</span>`;
 
   return `
@@ -87,7 +94,7 @@ const getBaseLayout = (content: string, ctaLink?: string, ctaText?: string, bran
               </a>
             </div>
           ` : ''}
-          ${branding?.signature ? `<div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 14px; color: #9ca3af;">${branding.signature}</div>` : ''}
+          ${branding?.signature ? `<div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 14px; color: #9ca3af;">${escapeHtml(branding.signature)}</div>` : ''}
         </div>
         <div style="padding: 20px 40px; background-color: #f9fafb; border-top: 1px solid #f3f4f6; text-align: center;">
           <p style="font-size: 12px; color: #9ca3af; margin: 0;">Powered by PayRecover · Automated Failed Payment Recovery</p>

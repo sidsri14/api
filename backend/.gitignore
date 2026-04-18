@@ -40,3 +40,12 @@ optimize.sql
 
 # Test/debug artifacts
 *.txt
+*.log
+check_*.ts
+test_*.ts
+test_*.cjs
+test-*.ts
+live_test.*
+simulate_*.ts
+billing_test_*
+.playwright-mcp/
