@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FC, FormEvent } from 'react';
-import { Plus, Trash2, Copy, Loader2, Key, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, Copy, Key, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';

@@ -117,7 +117,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
               <Tooltip 
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 labelStyle={{ fontWeight: 'bold', color: '#18181b', marginBottom: '4px' }}
-                formatter={(value: number, name: string) => [`₹${(value/100).toFixed(2)}`, name === 'recovered' ? 'Recovered' : 'Failed']}
+                formatter={(value: any, name: any) => [`₹${(Number(value)/100).toFixed(2)}`, name === 'recovered' ? 'Recovered' : 'Failed']}
               />
               <Area type="monotone" dataKey="failed" stroke="#f87171" strokeWidth={2} fillOpacity={1} fill="url(#colorFailed)" />
               <Area type="monotone" dataKey="recovered" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorRec)" />

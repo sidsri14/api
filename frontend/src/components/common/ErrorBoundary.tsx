@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RotateCcw } from 'lucide-react';
 
 interface Props {
@@ -40,7 +40,7 @@ class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.MODE === 'development' && this.state.error && (
               <div className="text-left bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700">
                 <p className="text-xs font-mono text-rose-600 dark:text-rose-400 break-all">
                   {this.state.error.toString()}
