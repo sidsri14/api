@@ -1,6 +1,12 @@
 import 'dotenv/config';
+import * as Sentry from "@sentry/bun";
 import pino from 'pino';
 import IORedis from 'ioredis';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
 
 // Warn about delivery-channel env vars at worker startup (worker is where emails/SMS fire).
 const DELIVERY_ENV: Array<{ key: string; impact: string }> = [
@@ -9,6 +15,7 @@ const DELIVERY_ENV: Array<{ key: string; impact: string }> = [
   { key: 'TWILIO_AUTH_TOKEN',     impact: 'Pro-plan SMS/WhatsApp (3rd attempt) will be skipped' },
   { key: 'TWILIO_FROM_NUMBER',    impact: 'Pro-plan SMS (3rd attempt) will be skipped' },
   { key: 'TWILIO_WHATSAPP_FROM',  impact: 'Pro-plan WhatsApp (3rd attempt) will be skipped (optional)' },
+  { key: 'SENTRY_DSN',            impact: 'Error monitoring will be disabled' },
 ];
 DELIVERY_ENV.filter(({ key }) => !process.env[key]).forEach(({ key, impact }) =>
   console.warn(`[Worker] ⚠  ${key} not set: ${impact}`)
@@ -74,6 +81,7 @@ recoveryWorker.on('completed', (job) => {
 
 recoveryWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, paymentId: job?.data?.failedPaymentId, err }, 'Recovery job failed');
+  Sentry.captureException(err, { extra: { jobId: job?.id, paymentId: job?.data?.failedPaymentId } });
 });
 
 // ── Hourly abandon cleanup ────────────────────────────────────────────────────
@@ -122,6 +130,7 @@ const runAbandonCleanup = async (): Promise<void> => {
     }
   } catch (err) {
     logger.error(err, 'Abandon cleanup error');
+    Sentry.captureException(err);
   } finally {
     abandonHandle = setTimeout(runAbandonCleanup, ABANDON_INTERVAL_MS);
   }

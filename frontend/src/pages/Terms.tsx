@@ -56,10 +56,40 @@ const Terms = () => {
         <section>
           <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest mb-4 flex items-center gap-3">
             <span className="w-8 h-8 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 flex items-center justify-center text-xs font-bold">04</span>
-            Disclaimer & Liability
+            Payments & Subscriptions
           </h2>
           <p>
-            The service is provided "as is". PayRecover makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties of merchantability or fitness for a particular purpose. While we aim for maximum recovery, we do not guarantee specific financial results.
+            You agree to pay all fees associated with your selected plan. Fees are non-refundable except as required by law. PayRecover reserves the right to change its pricing with a 30-day notice to active users.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest mb-4 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 flex items-center justify-center text-xs font-bold">05</span>
+            Service Availability
+          </h2>
+          <p>
+            While we strive for 99.9% uptime, PayRecover is provided on an "as-is" and "as-available" basis. We are not liable for any revenue loss arising from service interruptions or delays in recovery communication.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest mb-4 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 flex items-center justify-center text-xs font-bold">06</span>
+            Termination
+          </h2>
+          <p>
+            We may terminate or suspend your account immediately, without prior notice or liability, for any reason, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest mb-4 flex items-center gap-3">
+            <span className="w-8 h-8 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 flex items-center justify-center text-xs font-bold">07</span>
+            Governing Law
+          </h2>
+          <p>
+            These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions.
           </p>
         </section>
       </div>

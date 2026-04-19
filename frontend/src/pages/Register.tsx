@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api, API_URL } from '../api';
 import toast from 'react-hot-toast';
 import { ShieldPlus, Mail, Lock, UserPlus, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { trackEvent } from '../utils/analytics';
 import type { AuthUser } from '../App';
 
 interface Props {
@@ -46,9 +47,7 @@ const Register: React.FC<Props> = ({ onRegisterSuccess }) => {
       const { data } = await api.post('/auth/register', { name, email, password });
       if (data.success) {
         toast.success('Account created — welcome!');
-        // The backend sets an httpOnly auth cookie on registration.
-        // Calling onRegisterSuccess with the user data logs the user in immediately
-        // without forcing them to sign in again.
+        trackEvent('registration_success', { method: 'email' });
         onRegisterSuccess(data.data.user);
       }
     } catch (err: unknown) {
@@ -188,7 +187,10 @@ const Register: React.FC<Props> = ({ onRegisterSuccess }) => {
           </div>
 
           <button
-            onClick={() => window.location.href = API_URL + '/auth/google'}
+            onClick={() => {
+              trackEvent('signup_click', { location: 'registration_page', method: 'google' });
+              window.location.href = API_URL + '/auth/google';
+            }}
             className="w-full bg-white dark:bg-stone-800 border border-warm-border dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

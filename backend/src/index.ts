@@ -1,5 +1,11 @@
+import * as Sentry from "@sentry/bun";
 import { app } from './app.js';
 import { prisma } from './utils/prisma.js';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
 
 const port = process.env.PORT || 3000;
 
@@ -13,6 +19,7 @@ const OPTIONAL_ENV: Array<{ key: string; impact: string }> = [
   { key: 'TWILIO_SID',         impact: 'Pro-plan SMS recovery on 3rd attempt will be skipped' },
   { key: 'TWILIO_AUTH_TOKEN',  impact: 'Pro-plan SMS recovery on 3rd attempt will be skipped' },
   { key: 'TWILIO_FROM_NUMBER', impact: 'Pro-plan SMS recovery on 3rd attempt will be skipped' },
+  { key: 'SENTRY_DSN',         impact: 'Error monitoring will be disabled' },
 ];
 
 function validateEnv(): void {

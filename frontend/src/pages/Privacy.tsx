@@ -55,13 +55,31 @@ const Privacy = () => {
 
         <section>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-stone-800 flex items-center justify-center">
-              <EyeOff className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+              <Scale className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest">No Data Selling</h2>
+            <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest">Third-Party Sub-processors</h2>
           </div>
           <p>
-            PayRecover does not sell, lease, or trade merchant or customer data to third parties. Data is shared exclusively with payment providers (Stripe/Razorpay) as necessary to process the merchant's transactions.
+            To provide our services, we use trusted sub-processors. These include:
+          </p>
+          <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
+            <li><strong>Railway / Neon:</strong> Cloud infrastructure and database hosting.</li>
+            <li><strong>Resend:</strong> Transactional email delivery.</li>
+            <li><strong>Twilio:</strong> SMS and WhatsApp gateway delivery.</li>
+            <li><strong>Vercel:</strong> Static frontend hosting.</li>
+          </ul>
+        </section>
+
+        <section>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center">
+              <Lock className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest">Security Commitment</h2>
+          </div>
+          <p>
+            We implement comprehensive technical and organizational measures to protect your data. This includes end-to-end encryption for session cookies, forced HTTPS, and regular dependency audits to patch vulnerabilities.
           </p>
         </section>
       </div>

@@ -1,118 +1,67 @@
-# PayRecover
+# PayRecover 🚀
+### **Automatic Revenue Recovery for Modern Businesses**
 
-Recover failed Razorpay payments automatically.
-
-- Detect failed payments the instant they happen
-- Retry with smart scheduling (Day 0 → 24h → 72h)
-- Send automated email reminders with direct payment links
-- Recover lost revenue — no manual follow-up required
-
-## Results
-
-Users recover 10–30% of failed payments automatically.
+PayRecover is a professional-grade failed payment recovery platform. We monitor your payment gateways in real-time and use multi-channel automation (Email, SMS, WhatsApp) to win back lost revenue while you sleep.
 
 ---
 
-## How It Works
+## ✨ Core Features
 
-1. Customer's payment fails on Razorpay
-2. PayRecover receives the webhook instantly
-3. A recovery link is generated and emailed to the customer
-4. If no action, two follow-up reminders go out automatically
-5. When the customer pays, the payment is marked recovered
-
----
-
-## Tech Stack
-
-- **Backend**: Bun, Express, Prisma, SQLite
-- **Frontend**: React 19, Vite, Tailwind CSS 4
-- **Payments**: Razorpay Webhooks + Payment Links API
+*   **⚡ Real-time Ingestion**: Instant detection of failed payments via secure Webhook integration.
+*   **🤖 Multi-channel Recovery**: Automated sequences across Email, SMS, and WhatsApp (via Twilio).
+*   **🎨 Custom Branding**: Personalized recovery links with your logo, colors, and signature.
+*   **📊 Advanced Analytics**: deep-dive into recovery trends, conversion rates, and platform attribution (Mobile vs. Desktop).
+*   **🛡️ Enterprise Security**: Built-in CSRF protection, secure JWT auth, and encrypted source connections.
+*   **🤝 Team Management**: Invite teammates and manage permissions for a unified recovery operation.
 
 ---
 
-## Getting Started
+## 🛠️ Technology Stack
 
-### 1. Install dependencies
-
-```bash
-cd backend && bun install
-cd frontend && npm install
-```
-
-### 2. Configure environment
-
-Create `backend/.env`:
-
-```env
-PORT=3000
-DATABASE_URL="file:./prisma/dev.db"
-JWT_SECRET="change-this-before-deploying"
-RAZORPAY_KEY_ID="rzp_test_..."
-RAZORPAY_KEY_SECRET="your-key-secret"
-RAZORPAY_WEBHOOK_SECRET="your-webhook-secret"
-```
-
-### 3. Initialize database
-
-```bash
-cd backend
-bunx prisma migrate deploy
-```
-
-### 4. Run
-
-Start the API server:
-
-```bash
-cd backend && bun run src/index.ts
-```
-
-Start the recovery worker (separate process):
-
-```bash
-cd backend && bun run src/worker.ts
-```
-
-Start the dashboard:
-
-```bash
-cd frontend && npm run dev
-```
-
-Dashboard: `http://localhost:5173`
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | Bun, Express, Node.js |
+| **Database** | Prisma (ORM), SQLite (Production-ready on Railway) |
+| **Frontend** | React 19, Vite, Tailwind CSS 4 |
+| **Communications** | Resend (Email), Twilio (SMS/WhatsApp) |
+| **Monitoring** | Integrated Health Checks & Live Logs |
 
 ---
 
-## Plans
+## 🚀 Deployment
 
-| Feature | Free | Pro |
-|---|---|---|
-| Track failed payments | Yes | Yes |
-| Dashboard access | Yes | Yes |
-| Manual retry | Yes | Yes |
-| Auto retry × 3 | No | Yes |
-| Email reminders | No | Yes |
-| Razorpay recovery links | No | Yes |
+### **Production Environment**
+*   **Frontend**: Deployed on **Vercel** ([pay-recover.vercel.app](https://pay-recover.vercel.app)).
+*   **Backend & Worker**: Deployed on **Railway** with horizontal scaling support.
 
----
-
-## Architecture
-
-```
-src/
-  index.ts       # Server entry (start listening)
-  app.ts         # Express setup (middleware, routes)
-  worker.ts      # Background recovery worker (runs hourly)
-  controllers/   # Route handlers
-  services/      # Business logic (payment, razorpay, email, auth)
-  routes/        # Route definitions
-  middleware/    # Auth, error handling, rate limiting
-  validators/    # Zod input validation
-```
+### **Local Setup**
+1.  **Clone & Install**:
+    ```bash
+    git clone https://github.com/sidsri14/PayRecover.git
+    cd PayRecover
+    cd backend && bun install
+    cd ../frontend && npm install
+    ```
+2.  **Environment Setup**:
+    Configure `backend/.env` with your Razorpay/Stripe keys, Twilio SID, and SMTP settings.
+3.  **Run Services**:
+    - **API**: `cd backend && bun run src/index.ts`
+    - **Worker**: `cd backend && bun run src/worker.ts`
+    - **Dashboard**: `cd frontend && npm run dev`
 
 ---
 
-## License
+## 📈 Roadmap
 
-MIT
+- [x] Multi-channel Recovery (Email, SMS, WA)
+- [x] Custom Recovery Branding
+- [x] Advanced Analytics Dashboard
+- [ ] Post-Payment Feedback Surveys
+- [ ] AI-Powered Subject Line Optimization
+- [ ] Native Mobile App for Notifications
+
+---
+
+## ⚖️ License
+
+MIT License. Designed with ❤️ for businesses that hate losing money.

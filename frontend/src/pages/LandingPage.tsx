@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Zap, ArrowRight, CheckCircle2, TrendingUp, RotateCcw, IndianRupee, Globe, ShieldAlert, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { trackEvent } from '../utils/analytics';
 
 const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(() => {
@@ -77,6 +78,7 @@ const LandingPage = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link 
                 to="/register" 
+                onClick={() => trackEvent('signup_click', { location: 'hero' })}
                 className="w-full sm:w-auto px-10 py-5 bg-stone-900 dark:bg-emerald-600 text-white text-lg font-black rounded-2xl hover:bg-emerald-500 dark:hover:bg-emerald-500 hover:-translate-y-1 transition-all shadow-2xl shadow-emerald-600/20 flex items-center justify-center gap-2"
               >
                 Connect Razorpay <ArrowRight className="w-5 h-5" />
@@ -174,7 +176,7 @@ const LandingPage = () => {
                 <span className="text-stone-400 font-bold">/mo</span>
               </div>
               <ul className="space-y-4 mb-10">
-                {['Unlimited Recoveries', 'Priority Support', 'Custom Branding (Coming)', 'GST Invoicing'].map((f, i) => (
+                {['Unlimited Recoveries', 'Priority Support', 'Full Custom Branding', 'GST Invoicing'].map((f, i) => (
                    <li key={i} className="flex items-center gap-3 text-sm font-bold text-stone-500 dark:text-stone-400">
                      <CheckCircle2 className="w-5 h-5 text-emerald-500" /> {f}
                    </li>
@@ -191,7 +193,11 @@ const LandingPage = () => {
         <div className="max-w-4xl mx-auto bg-stone-900 dark:bg-emerald-600 rounded-[60px] p-20 text-white relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
           <h2 className="text-5xl md:text-6xl font-black mb-8 leading-tight">Ready to recover your <br /> lost revenue?</h2>
-          <Link to="/register" className="inline-flex items-center gap-3 px-12 py-6 bg-white text-stone-900 text-xl font-black rounded-2xl hover:scale-105 transition-all">
+          <Link 
+            to="/register" 
+            onClick={() => trackEvent('signup_click', { location: 'cta_bottom' })}
+            className="inline-flex items-center gap-3 px-12 py-6 bg-white text-stone-900 text-xl font-black rounded-2xl hover:scale-105 transition-all"
+          >
             Get Started Free <ArrowRight className="w-6 h-6" />
           </Link>
           <p className="mt-8 text-white/50 text-sm font-bold">60-second setup. No credit card required.</p>

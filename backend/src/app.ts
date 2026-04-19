@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import * as Sentry from "@sentry/bun";
 import crypto from 'crypto';
 import express from 'express';
 import pino from 'pino';
@@ -209,6 +210,7 @@ app.use('/api/contact', contactRoutes);
 // Error Handling
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err, requestId: req.headers['x-request-id'] }, 'Unhandled error');
+  Sentry.captureException(err);
   const status = err.status || 500;
   // Never expose internal error details on 5xx — only log them server-side
   const message = status < 500 ? (err.message || 'Bad Request') : 'Internal Server Error';
