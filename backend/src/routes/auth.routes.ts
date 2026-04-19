@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, getMe, verifyEmail, requestPasswordReset, resetPassword, updateProfile, updatePassword, googleAuthCallback, setPassword, updateBranding, sendTestEmail } from '../controllers/auth.controller.js';
+import { register, login, logout, getMe, verifyEmail, requestPasswordReset, resetPassword, updateProfile, updatePassword, googleAuthCallback, setPassword, updateBranding, sendTestEmail, sendTestSms, sendTestWhatsApp } from '../controllers/auth.controller.js';
 import passport from 'passport';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { csrfCheck } from '../middleware/csrf.middleware.js';
@@ -30,5 +30,7 @@ router.patch('/password', requireAuth, csrfCheck, updatePassword);
 router.patch('/set-password', requireAuth, csrfCheck, validateRequest(setPasswordSchema), setPassword);
 router.patch('/branding', requireAuth, csrfCheck, updateBranding);
 router.post('/test-email', requireAuth, csrfCheck, sendTestEmail);
+router.post('/test-sms', requireAuth, csrfCheck, sendTestSms);
+router.post('/test-whatsapp', requireAuth, csrfCheck, sendTestWhatsApp);
 
 export default router;

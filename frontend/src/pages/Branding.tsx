@@ -30,6 +30,9 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
   });
   const [emailSubject, setEmailSubject] = useState('');
   const [emailTone, setEmailTone] = useState<'professional' | 'friendly' | 'urgent'>('professional');
+  const [testPhone, setTestPhone] = useState('');
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
 
   useEffect(() => {
     if (user.brandSettings) {
@@ -74,6 +77,32 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
       toast.error(err.response?.data?.error || 'Failed to send test email');
     } finally {
       setTestLoading(false);
+    }
+  };
+
+  const handleSendTestSms = async () => {
+    if (!testPhone) return toast.error('Enter a phone number');
+    setSmsLoading(true);
+    try {
+      await api.post('/auth/test-sms', { phoneNumber: testPhone });
+      toast.success('Test SMS sent to ' + testPhone);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to send test SMS');
+    } finally {
+      setSmsLoading(false);
+    }
+  };
+
+  const handleSendTestWhatsApp = async () => {
+    if (!testPhone) return toast.error('Enter a phone number');
+    setWhatsappLoading(true);
+    try {
+      await api.post('/auth/test-whatsapp', { phoneNumber: testPhone });
+      toast.success('Test WhatsApp sent to ' + testPhone);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to send test WhatsApp');
+    } finally {
+      setWhatsappLoading(false);
     }
   };
 
@@ -221,18 +250,60 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
               <Mail className="w-5 h-5 text-stone-400" />
               <h2 className="text-lg font-bold text-stone-700 dark:text-stone-200">Test Communication</h2>
             </div>
-            <div className="bg-stone-50 dark:bg-stone-900/50 p-6 rounded-2xl border border-stone-100 dark:border-stone-800 space-y-4">
-              <p className="text-xs text-stone-500 leading-relaxed font-medium">
-                Verify your Branding and SMTP configuration by sending a sample recovery email to yourself.
-              </p>
-              <button
-                onClick={handleSendTest}
-                disabled={testLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 font-bold rounded-xl text-xs hover:bg-stone-50 dark:hover:bg-stone-700 transition-all shadow-sm"
-              >
-                {testLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                Send Test Email
-              </button>
+            
+            <div className="space-y-8">
+              {/* Email Test */}
+              <div className="bg-stone-50 dark:bg-stone-900/50 p-6 rounded-2xl border border-stone-100 dark:border-stone-800 space-y-4">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-stone-800 dark:text-stone-200 mb-2">Email Testing</h3>
+                  <p className="text-[10px] text-stone-500 leading-normal font-medium">
+                    Verify your Branding and SMTP configuration by sending a sample recovery email.
+                  </p>
+                </div>
+                <button
+                  onClick={handleSendTest}
+                  disabled={testLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 font-bold rounded-xl text-xs hover:bg-stone-50 dark:hover:bg-stone-700 transition-all shadow-sm"
+                >
+                  {testLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                  Send Email to {user.email}
+                </button>
+              </div>
+
+              {/* SMS/WA Test */}
+              <div className="bg-indigo-50 dark:bg-indigo-900/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/20 space-y-4">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-400 mb-2">Mobile Recovery (Pro)</h3>
+                  <p className="text-[10px] text-stone-500 dark:text-indigo-900/40 leading-normal font-medium">
+                    Test your Twilio integration for SMS and WhatsApp. Requires E.164 format (ex: +919876543210).
+                  </p>
+                </div>
+                
+                <input
+                  type="text"
+                  placeholder="+91..."
+                  value={testPhone}
+                  onChange={e => setTestPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900/30 bg-white dark:bg-stone-900 outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/20 transition-all text-xs font-mono"
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handleSendTestSms}
+                    disabled={smsLoading}
+                    className="flex items-center justify-center gap-2 py-3 bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-bold rounded-xl text-xs hover:bg-black transition-all shadow-lg"
+                  >
+                    {smsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test SMS'}
+                  </button>
+                  <button
+                    onClick={handleSendTestWhatsApp}
+                    disabled={whatsappLoading}
+                    className="flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-bold rounded-xl text-xs hover:opacity-90 transition-all shadow-lg"
+                  >
+                    {whatsappLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test WhatsApp'}
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
 
