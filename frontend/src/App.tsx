@@ -9,15 +9,17 @@ import { api } from './api';
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const PaymentDetails = lazy(() => import('./pages/PaymentDetails'));
-const Sources = lazy(() => import('./pages/Sources'));
+const Dashboard = lazy(() => import('./pages/Dashboard')); // Now showing stats
+const InvoiceList = lazy(() => import('./pages/InvoiceList'));
+const CreateInvoice = lazy(() => import('./pages/CreateInvoice'));
+const Clients = lazy(() => import('./pages/Clients'));
+const Demo = lazy(() => import('./pages/Demo'));
+// Keep existing ones for now or migrate
 const Settings = lazy(() => import('./pages/Settings'));
 const Branding = lazy(() => import('./pages/Branding'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
-const PaymentStatus = lazy(() => import('./pages/PaymentStatus'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -75,11 +77,9 @@ const MobileNav = ({ user, onLogout }: { user: AuthUser; onLogout: () => void })
 
   const menuItems = [
     { label: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { label: 'Sources', icon: Link2, path: '/sources' },
+    { label: 'Invoices', icon: Link2, path: '/invoices' },
+    { label: 'Clients', icon: Users, path: '/clients' },
     { label: 'Team', icon: Users, path: '/team' },
-    { label: 'Security', icon: Shield, path: '/security' },
-    { label: 'Webhooks', icon: Webhook, path: '/webhooks' },
-    { label: 'API Keys', icon: KeyRound, path: '/api-keys' },
     { label: 'Settings', icon: SettingsIcon, path: '/settings' },
   ];
 
@@ -161,45 +161,24 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl tracking-tight text-stone-800 dark:text-stone-100 hidden sm:block">
-            PayRecover
+            StripeFlow
           </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
           <nav className="hidden md:flex items-center gap-4">
             <button
-              onClick={() => navigate('/sources')}
+              onClick={() => navigate('/invoices')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
             >
-              <Link2 className="w-4 h-4" /> Sources
+              <Link2 className="w-4 h-4" /> Invoices
             </button>
 
             <button
-              onClick={() => navigate('/team')}
+              onClick={() => navigate('/clients')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
             >
-              <Users className="w-4 h-4" /> Team
-            </button>
-
-            <button
-              onClick={() => navigate('/security')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
-            >
-              <Shield className="w-4 h-4" /> Security
-            </button>
-
-            <button
-              onClick={() => navigate('/webhooks')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
-            >
-              <Webhook className="w-4 h-4" /> Webhooks
-            </button>
-
-            <button
-              onClick={() => navigate('/api-keys')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium text-sm border border-transparent hover:border-warm-border dark:hover:border-stone-700"
-            >
-              <KeyRound className="w-4 h-4" /> API Keys
+              <Users className="w-4 h-4" /> Clients
             </button>
 
             <button
@@ -240,7 +219,7 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
 
     <footer className="p-8 border-t border-warm-border dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl mx-auto w-full">
       <p className="text-xs font-medium text-stone-400 tracking-wide">
-        &copy; 2026 PayRecover
+        &copy; 2026 StripeFlow
       </p>
       <div className="flex gap-6 text-xs font-medium text-stone-400">
         <Link to="/terms" className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">Terms</Link>
@@ -258,23 +237,22 @@ function PageTitle() {
   const location = useLocation();
   useEffect(() => {
     const titles: Record<string, string> = {
-      '/': 'PayRecover | Failed Payment Recovery',
-      '/dashboard': 'Dashboard | PayRecover',
-      '/login': 'Sign In | PayRecover',
-      '/register': 'Create Account | PayRecover',
-      '/sources': 'Payment Sources | PayRecover',
-      '/team': 'Team Management | PayRecover',
-      '/settings': 'Settings | PayRecover',
-      '/branding': 'Branding & Design | PayRecover',
-      '/security': 'Security & Audit | PayRecover',
-      '/webhooks': 'Webhooks | PayRecover',
-      '/api-keys': 'API Keys | PayRecover',
-      '/forgot-password': 'Reset Password | PayRecover',
-      '/reset-password': 'New Password | PayRecover',
-      '/verify-email': 'Verify Account | PayRecover',
-      '/payment-status': 'Payment Status | PayRecover',
+      '/': 'StripeFlow | Premium Invoicing for Freelancers',
+      '/dashboard': 'Dashboard | StripeFlow',
+      '/login': 'Sign In | StripeFlow',
+      '/register': 'Create Account | StripeFlow',
+      '/invoices': 'Invoices | StripeFlow',
+      '/clients': 'Clients | StripeFlow',
+      '/demo': 'Live Demo | StripeFlow',
+      '/settings': 'Settings | StripeFlow',
+      '/branding': 'Branding | StripeFlow',
+      '/security': 'Security | StripeFlow',
+      '/forgot-password': 'Reset Password | StripeFlow',
+      '/reset-password': 'New Password | StripeFlow',
+      '/verify-email': 'Verify Account | StripeFlow',
+      '/payment-status': 'Payment Status | StripeFlow',
     };
-    document.title = titles[location.pathname] || 'PayRecover | Failed Payment Recovery';
+    document.title = titles[location.pathname] || 'StripeFlow | Invoicing for Freelancers';
   }, [location.pathname]);
   return null;
 }
@@ -349,6 +327,7 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/demo" element={<Demo />} />
 
             {/* Protected Routes */}
             <Route path="/*" element={
@@ -356,14 +335,13 @@ function App() {
                 <Layout user={user} onLogout={handleLogout}>
                   <Routes>
                     <Route path="/dashboard" element={<Dashboard user={user} />} />
-                    <Route path="/payments/:id" element={<PaymentDetails />} />
-                    <Route path="/sources" element={<Sources />} />
-                    <Route path="/team" element={<Team />} />
+                    <Route path="/invoices" element={<InvoiceList />} />
+                    <Route path="/invoices/new" element={<CreateInvoice />} />
+                    <Route path="/clients" element={<Clients />} />
                     <Route path="/settings" element={<Settings user={user} onUpdateUser={(u) => setUser(u)} />} />
                     <Route path="/branding" element={<Branding user={user} onUpdateUser={(u) => setUser(u)} />} />
                     <Route path="/security" element={<Security />} />
-                    <Route path="/webhooks" element={<Webhooks />} />
-                    <Route path="/api-keys" element={<ApiKeys />} />
+                    <Route path="/team" element={<Team />} />
                     <Route path="*" element={<Navigate to="/dashboard" />} />
                   </Routes>
                 </Layout>

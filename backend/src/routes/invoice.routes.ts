@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { InvoiceController } from '../controllers/invoice.controller.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
+const router = Router();
+
+router.use(requireAuth);
+
+router.post('/', InvoiceController.create);
+router.get('/', InvoiceController.list);
+router.get('/:id', InvoiceController.get);
+router.delete('/:id', InvoiceController.delete);
+
+export default router;

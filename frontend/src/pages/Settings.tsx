@@ -14,7 +14,11 @@ interface Props {
 
 const Settings: FC<Props> = ({ user, onUpdateUser }) => {
   const [loading, setLoading] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: user.name || '', email: user.email });
+  const [profileForm, setProfileForm] = useState({ 
+    name: user.name || '', 
+    email: user.email,
+    companyName: JSON.parse(user.brandSettings || '{}').companyName || ''
+  });
   const [securityForm, setSecurityForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [profileLoading, setProfileLoading] = useState(false);
   const [securityLoading, setSecurityLoading] = useState(false);
@@ -78,7 +82,13 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
     e.preventDefault();
     setProfileLoading(true);
     try {
-      const { data } = await api.patch('/auth/profile', profileForm);
+      const brandSettings = JSON.parse(user.brandSettings || '{}');
+      brandSettings.companyName = profileForm.companyName;
+      
+      const { data } = await api.patch('/auth/profile', {
+        name: profileForm.name,
+        brandSettings: JSON.stringify(brandSettings)
+      });
       if (data.success) {
         toast.success('Profile updated successfully');
         onUpdateUser(data.data.user);
@@ -162,7 +172,7 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-bold text-stone-800 dark:text-stone-100 italic">Free Tier</h3>
-                <p className="text-2xl font-black text-stone-900 dark:text-white mt-1">₹0<span className="text-sm font-medium text-stone-400">/mo</span></p>
+                <p className="text-2xl font-black text-stone-900 dark:text-white mt-1">$0<span className="text-sm font-medium text-stone-400">/mo</span></p>
               </div>
               {user.plan === 'free' && (
                 <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase rounded-md border border-emerald-200 dark:border-emerald-800">Current Plan</span>
@@ -183,8 +193,8 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
           <div className={`p-6 rounded-2xl border transition-all ${user.plan !== 'free' ? 'border-emerald-500 bg-white dark:bg-stone-800 shadow-soft' : 'border-emerald-600/30 bg-emerald-50/10 dark:bg-emerald-900/5 shadow-soft'}`}>
             <div className="flex justify-between items-start mb-4">
               <div>
-                <div className="flex items-center gap-2"><h3 className="font-bold text-emerald-600 dark:text-emerald-400 italic">Pro Recovery</h3><Zap className="w-3 h-3 text-amber-400 fill-amber-400" /></div>
-                <p className="text-2xl font-black text-stone-900 dark:text-white mt-1">₹1,499<span className="text-sm font-medium text-stone-400">/mo</span></p>
+                <div className="flex items-center gap-2"><h3 className="font-bold text-emerald-600 dark:text-emerald-400 italic">Pro Invoicing</h3><Zap className="w-3 h-3 text-amber-400 fill-amber-400" /></div>
+                <p className="text-2xl font-black text-stone-900 dark:text-white mt-1">$19<span className="text-sm font-medium text-stone-400">/mo</span></p>
               </div>
               {user.plan !== 'free' ? (
                 <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase rounded-md border border-emerald-200 dark:border-emerald-800">Current Plan</span>
@@ -193,9 +203,9 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
               )}
             </div>
             <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Automated recovery worker</li>
-              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> High-conversion email templates</li>
-              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Custom branding</li>
+              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Unlimited Invoices</li>
+              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Automated Payment Reminders</li>
+              <li className="flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200 font-medium"><Check className="w-4 h-4 text-emerald-500" /> Branded PDF Generation</li>
             </ul>
             {user.plan === 'free' ? (
               <button onClick={() => handleCheckout('pro')} disabled={loading} className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
@@ -280,6 +290,16 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
                 placeholder="Ex: Satish Chandra"
                 className="w-full px-4 py-3 rounded-xl border border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 outline-none focus:border-stone-200 dark:focus:border-stone-500 text-stone-700 dark:text-stone-200 transition-colors"
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-stone-400 uppercase tracking-widest pl-1">Company Name</label>
+              <input
+                type="text"
+                value={profileForm.companyName || ''}
+                onChange={e => setProfileForm(f => ({ ...f, companyName: e.target.value }))}
+                placeholder="Ex: ACME Design Studio"
+                className="w-full px-4 py-3 rounded-xl border border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 outline-none focus:border-stone-200 dark:focus:border-stone-500 text-stone-700 dark:text-stone-200 transition-colors"
               />
             </div>
             <div className="space-y-2">

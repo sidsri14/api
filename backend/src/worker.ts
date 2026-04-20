@@ -27,6 +27,7 @@ import { processPruneJob } from './jobs/prune.processor.js';
 import { processWebhookDeliveryJob } from './jobs/webhook.processor.js';
 import { enqueuePrunePiiJob } from './jobs/recovery.queue.js';
 import { OutboundWebhookService } from './services/OutboundWebhookService.js';
+import { invoiceWorker } from './jobs/invoice.processor.js';
 
 const ABANDON_AFTER_DAYS = 7;
 const ABANDON_INTERVAL_MS = 60 * 60 * 1000; // check every hour
@@ -143,6 +144,7 @@ const shutdown = async (signal: string): Promise<void> => {
   if (abandonHandle) clearTimeout(abandonHandle);
   if (heartbeatHandle) clearInterval(heartbeatHandle);
   await recoveryWorker.close();
+  await invoiceWorker.close();
   workerConnection.disconnect();
   await prisma.$disconnect();
   process.exit(0);

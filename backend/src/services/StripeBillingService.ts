@@ -66,6 +66,42 @@ export class StripeBillingService {
   }
 
   /**
+   * Creates a Stripe Checkout Session for a specific invoice.
+   */
+  static async createInvoiceSession(invoice: any, user: any) {
+    const session = await getStripe().checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      customer_email: invoice.clientEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: invoice.currency.toLowerCase(),
+            product_data: {
+              name: invoice.description,
+              description: `Invoice from ${user.name || user.email}`,
+            },
+            unit_amount: invoice.amount,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard?status=paid&invoice_id=${invoice.id}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard?status=cancelled`,
+      metadata: {
+        userId: user.id,
+        invoiceId: invoice.id,
+        type: 'invoice'
+      },
+    });
+
+    return {
+      id: session.id,
+      url: session.url,
+    };
+  }
+
+  /**
    * Handle Stripe platform webhooks (subscription lifecycle).
    */
   static async handleWebhook(event: Stripe.Event) {
@@ -91,6 +127,19 @@ export class StripeBillingService {
             where: { id: userId },
             data: { plan },
           });
+        }
+
+        // Handle one-off invoice payments
+        const invoiceId = data.metadata?.invoiceId;
+        const type = data.metadata?.type;
+        if (type === 'invoice' && invoiceId) {
+          await prisma.invoice.update({
+            where: { id: invoiceId },
+            data: { status: 'paid' }
+          });
+          
+          // Note: In a real app, you'd trigger a receipt email here.
+          // We'll handle this in the InvoiceService or a dedicated worker.
         }
         break;
       }

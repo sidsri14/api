@@ -84,36 +84,31 @@ export const triggerManualRetry = async (userId: string, id: string) => {
 export const getPaymentMetrics = async (userId: string) => {
   try {
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Optimized: Combine basic sums/counts into one groupBy instead of 5 separate aggregates
-    const [statsByStatus, weekRecovered, monthRecovered, viaLinkRecovered, clicksAgg] = await Promise.all([
-      prisma.failedPayment.groupBy({
+    const [statsByStatus, monthRecovered] = await Promise.all([
+      prisma.invoice.groupBy({
         by: ['status'], where: { userId }, _sum: { amount: true }, _count: true 
       }),
-      prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredAt: { gte: weekAgo } }, _sum: { amount: true } }),
-      prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredAt: { gte: monthAgo } }, _sum: { amount: true } }),
-      prisma.failedPayment.aggregate({ where: { userId, status: 'recovered', recoveredVia: 'link' }, _sum: { amount: true } }),
-      prisma.failedPayment.aggregate({ where: { userId }, _sum: { clickCount: true } }),
+      prisma.invoice.aggregate({ where: { userId, status: 'paid', updatedAt: { gte: monthAgo } }, _sum: { amount: true } }),
     ]);
 
     const stats = Object.fromEntries(statsByStatus.map(s => [s.status, { sum: s._sum.amount ?? 0, count: s._count }]));
-    const totalFailedSum = Object.values(stats).reduce((acc, s) => acc + s.sum, 0);
-    const recoveredSum = stats['recovered']?.sum ?? 0;
+    const totalInvoicedSum = Object.values(stats).reduce((acc, s) => acc + s.sum, 0);
+    const recoveredSum = stats['paid']?.sum ?? 0;
 
     return {
-      failedAmount: totalFailedSum,
+      failedAmount: totalInvoicedSum,
       recoveredAmount: recoveredSum,
-      recoveryRate: totalFailedSum > 0 ? Math.round((recoveredSum / totalFailedSum) * 1000) / 1000 : 0,
-      recoveredThisWeek: weekRecovered._sum.amount ?? 0,
+      recoveryRate: totalInvoicedSum > 0 ? Math.round((recoveredSum / totalInvoicedSum) * 1000) / 1000 : 0,
+      recoveredThisWeek: 0, // Placeholder
       recoveredThisMonth: monthRecovered._sum.amount ?? 0,
-      recoveredViaLink: viaLinkRecovered._sum.amount ?? 0,
-      totalClicks: clicksAgg._sum.clickCount ?? 0,
+      recoveredViaLink: 0,
+      totalClicks: stats['overdue']?.count ?? 0, // Reuse for Overdue count in UI
       counts: Object.fromEntries(Object.entries(stats).map(([k, v]) => [k, v.count])),
     };
   } catch (err) {
-    logger.error({ err }, 'Failed to compute payment metrics');
+    logger.error({ err }, 'Failed to compute invoice metrics');
     return { ...ZERO_METRICS, counts: {} };
   }
 };
@@ -122,7 +117,7 @@ export const getTimeseriesMetrics = async (userId: string, days = 30) => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  const payments = await prisma.failedPayment.findMany({
+  const invoices = await prisma.invoice.findMany({
     where: { userId, createdAt: { gte: startDate } },
     select: { amount: true, status: true, createdAt: true }
   });
@@ -136,11 +131,11 @@ export const getTimeseriesMetrics = async (userId: string, days = 30) => {
     timeseriesMap.set(dateStr, { date: dateStr, failed: 0, recovered: 0 });
   }
 
-  payments.forEach(p => {
+  invoices.forEach(p => {
     const dateStr = p.createdAt.toISOString().split('T')[0] as string;
     const stat = timeseriesMap.get(dateStr);
     if (stat) {
-      if (p.status === 'recovered') stat.recovered += p.amount;
+      if (p.status === 'paid') stat.recovered += p.amount;
       else stat.failed += p.amount;
     }
   });
@@ -150,36 +145,21 @@ export const getTimeseriesMetrics = async (userId: string, days = 30) => {
 
 export const getFullDashboardStats = async (userId: string) => {
   const m = await getPaymentMetrics(userId);
-  const counts = { pending: 0, retrying: 0, recovered: 0, abandoned: 0, ...m.counts };
-
-  // ── Phase 6: Platform Insights
-  const interactions = await prisma.auditLog.findMany({
-    where: { userId, action: 'PAYMENT_LINK_CLICKED' },
-    select: { details: true }
-  });
-
-  const platformBreakdown = { mobile: 0, desktop: 0 };
-  interactions.forEach(log => {
-    try {
-      const details = JSON.parse(log.details || '{}');
-      if (details.platform === 'Mobile') platformBreakdown.mobile++;
-      else platformBreakdown.desktop++;
-    } catch (e) {}
-  });
+  const counts = { pending: 0, paid: 0, overdue: 0, ...m.counts };
 
   const timeseries = await getTimeseriesMetrics(userId, 30);
 
   return {
-    totalFailed: (counts.pending || 0) + (counts.retrying || 0),
-    totalRecovered: counts.recovered || 0,
+    totalFailed: counts.pending || 0,
+    totalRecovered: counts.paid || 0,
     recoveryRate: Math.round(m.recoveryRate * 1000) / 10, // decimal → percentage
     totalFailedAmount: m.failedAmount,
     totalRecoveredAmount: m.recoveredAmount,
     recoveredThisWeek: m.recoveredThisWeek,
     recoveredThisMonth: m.recoveredThisMonth,
-    totalClicks: m.totalClicks,
+    totalClicks: m.totalClicks, // Using for Overdue Count UI
     counts,
-    platformBreakdown,
+    platformBreakdown: { mobile: 0, desktop: 0 },
     timeseries
   };
 };

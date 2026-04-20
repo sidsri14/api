@@ -30,6 +30,8 @@ model User {
   auditLogs             AuditLog[]
   webhookEndpoints      WebhookEndpoint[]
   apiKeys               ApiKey[]
+  clients               Client[]
+  invoices              Invoice[]
   brandSettings         String?         // JSON: { logoUrl, primaryColor, accentColor, companyName, emailSignature }
   brandEmailSubject     String?         // Custom recovery subject
   brandEmailTone        String?         @default("professional") // professional | friendly | urgent
@@ -226,4 +228,41 @@ model WebhookDelivery {
   attemptedAt DateTime        @default(now())
 
   @@index([endpointId])
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  invoices  Invoice[]
+
+  @@index([userId])
+}
+
+model Invoice {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId         String?
+  client           Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  description      String
+  amount           Int      // In cents (USD)
+  currency         String   @default("USD")
+  status           String   @default("pending") // pending | paid | overdue | cancelled
+  dueDate          DateTime
+  pdfUrl           String?
+  stripeSessionId  String?  @unique
+  clientEmail      String   // Redundant but useful for quick access/non-linked clients
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
 }

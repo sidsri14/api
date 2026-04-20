@@ -17,12 +17,12 @@ import billingRoutes from './routes/billing.routes.js';
 import teamRoutes from './routes/team.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
-import sourceRoutes from './routes/source.routes.js';
-import recoveryRoutes from './routes/recovery.routes.js';
 import webhookEndpointRoutes from './routes/webhookEndpoints.routes.js';
 import apiKeyRoutes from './routes/apiKeys.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import contactRoutes from './routes/contact.routes.js';
+import invoiceRoutes from './routes/invoice.routes.ts';
+import clientRoutes from './routes/client.routes.ts';
 import { Queue } from 'bullmq';
 import { billingWebhook, stripeBillingWebhook } from './controllers/billing.controller.js';
 import { requireAuth } from './middleware/auth.middleware.js';
@@ -200,12 +200,12 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/demo', demoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/sources', sourceRoutes);
-app.use('/api/recovery', recoveryRoutes);
 app.use('/api/webhook-endpoints', webhookEndpointRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/security', auditRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/clients', clientRoutes);
 
 // Error Handling
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {

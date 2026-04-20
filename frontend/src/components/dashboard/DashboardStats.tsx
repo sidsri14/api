@@ -20,39 +20,39 @@ interface DashboardStatsProps {
 export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
   const cards = [
     {
-      label: 'Recovery Rate',
-      value: `${stats?.recoveryRate ?? 0}%`,
-      sub: 'Of all failed payments',
-      icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
-      color: 'emerald',
-    },
-    {
-      label: 'Link Interactions',
-      value: stats?.totalClicks ?? 0,
-      sub: 'Total Click Volume',
-      icon: <RotateCcw className="w-5 h-5 text-blue-500" />,
-      color: 'blue',
-    },
-    {
-      label: 'Mobile Clicks',
-      value: stats?.platformBreakdown?.mobile ?? 0,
-      sub: 'User-Agent identified',
-      icon: <Smartphone className="w-5 h-5 text-indigo-500" />,
-      color: 'indigo',
-    },
-    {
-      label: 'Total Recovered',
-      value: stats?.totalRecovered ?? 0,
-      sub: 'Success Count',
+      label: 'Paid Revenue',
+      value: `$${(stats?.totalRecoveredAmount ?? 0) / 100}`,
+      sub: 'Successfully collected',
       icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
       color: 'emerald',
     },
     {
-      label: 'Active Retries',
+      label: 'Pending Invoices',
       value: stats?.totalFailed ?? 0,
-      sub: 'In recovery queue',
-      icon: <RotateCcw className="w-5 h-5 text-amber-500" />,
-      color: 'amber',
+      sub: 'Awaiting payment',
+      icon: <RotateCcw className="w-5 h-5 text-blue-500" />,
+      color: 'blue',
+    },
+    {
+      label: 'Overdue Count',
+      value: stats?.totalClicks ?? 0, // Reuse placeholder or update Backend
+      sub: 'Requires attention',
+      icon: <AlertTriangle className="w-5 h-5 text-rose-500" />,
+      color: 'rose',
+    },
+    {
+      label: 'Total Invoiced',
+      value: `$${(stats?.totalFailedAmount ?? 0) / 100}`,
+      sub: 'Lifetime volume',
+      icon: <TrendingUp className="w-5 h-5 text-indigo-500" />,
+      color: 'indigo',
+    },
+    {
+      label: 'Recovery Rate',
+      value: `${stats?.recoveryRate ?? 0}%`,
+      sub: 'Success percentage',
+      icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
+      color: 'emerald',
     }
   ];
 

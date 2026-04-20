@@ -5,6 +5,7 @@ import { prisma } from '../utils/prisma.js';
 import { successResponse } from '../utils/apiResponse.js';
 import { logAuditAction } from '../services/audit.service.js';
 import { enqueueRecoveryJob } from '../jobs/recovery.queue.js';
+import { StripeBillingService } from '../services/StripeBillingService.js';
 
 const logger = pino({ transport: { target: 'pino-pretty', options: { colorize: true } } });
 
@@ -45,5 +46,32 @@ export const simulateSuccess = async (req: AuthRequest, res: Response, next: Nex
     });
     await logAuditAction(req.userId!, 'DEMO_SUCCESS_SIMULATED', 'FailedPayment', p.id);
     successResponse(res, { message: 'Demo success simulated', payment: p });
+  } catch (err) { next(err); }
+};
+
+export const getPublicInvoice = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { user: { select: { name: true, email: true } } }
+    });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    successResponse(res, invoice);
+  } catch (err) { next(err); }
+};
+
+export const initiatePublicPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { user: true }
+    });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (invoice.status === 'paid') return res.status(400).json({ error: 'Invoice already paid' });
+
+    const session = await StripeBillingService.createInvoiceSession(invoice, invoice.user);
+    successResponse(res, session);
   } catch (err) { next(err); }
 };
