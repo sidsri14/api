@@ -1,8 +1,8 @@
 import { prisma } from '../utils/prisma.js';
-import { PdfService } from './PdfService.js';
+import { generateInvoicePDF } from './pdf.service.js';
 import { sendInvoiceEmail } from '../lib/resend.js';
 import { StripeBillingService } from './StripeBillingService.js';
-import { enqueueInvoiceReminder } from '../jobs/invoice.queue';
+import { enqueueInvoiceReminder } from '../jobs/invoice.queue.js';
 
 export class InvoiceService {
   /**
@@ -41,14 +41,13 @@ export class InvoiceService {
     });
 
     // 3. Generate PDF
-    const pdfBuffer = await PdfService.generateInvoicePdf(invoice, user, client || { name: data.clientEmail, email: data.clientEmail });
+    const fallbackClient = { id: '', userId, name: data.clientEmail, email: data.clientEmail, phone: null, company: null, createdAt: new Date(), updatedAt: new Date() };
+    const pdfBuffer = await generateInvoicePDF({ ...invoice, user, client: client ?? fallbackClient, items: [] } as any);
     
     // In a real app, you'd upload this to S3:
-    // const pdfUrl = await uploadToS3(pdfBuffer);
     const pdfUrl = `${process.env.BACKEND_URL}/api/invoices/${invoice.id}/pdf`; 
 
     // 4. Create Stripe Payment Link/Session
-    // We'll reuse/extend StripeBillingService or create a new one for one-off payments
     const stripeSession = await StripeBillingService.createInvoiceSession(invoice, user);
 
     // 5. Update invoice with metadata
@@ -67,7 +66,6 @@ export class InvoiceService {
     });
 
     // 7. Schedule BullMQ reminders
-    // Reminder 1: 3 days before/after? The prompt says "3 * 24 * 60 * 60 * 1000"
     await enqueueInvoiceReminder(invoice.id, 'reminder1', 3 * 24 * 60 * 60 * 1000);
     await enqueueInvoiceReminder(invoice.id, 'reminder2', 7 * 24 * 60 * 60 * 1000);
 

@@ -10,5 +10,6 @@ router.post('/', InvoiceController.create);
 router.get('/', InvoiceController.list);
 router.get('/:id', InvoiceController.get);
 router.delete('/:id', InvoiceController.delete);
+router.get('/:id/pdf', InvoiceController.getPdf);
 
 export default router;

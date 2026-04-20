@@ -194,38 +194,10 @@ export const sendTestEmail = async (req: AuthRequest, res: Response, next: NextF
   } catch (err) { next(err); }
 };
 
-export const sendTestSms = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { phoneNumber } = req.body;
-    if (!phoneNumber) return errorResponse(res, 'Phone number required', 400);
-
-    const { SmsService } = await import('../services/SmsService.js');
-    await SmsService.sendRecoverySms(
-      phoneNumber,
-      'Test User',
-      149900,
-      'INR',
-      (process.env.FRONTEND_URL || 'http://localhost:5173') + '/dashboard?test=1'
-    );
-
-    successResponse(res, { message: 'Test SMS dispatched' });
-  } catch (err) { next(err); }
+export const sendTestSms = async (_req: AuthRequest, res: Response) => {
+  return errorResponse(res, 'SMS is not available in StripeFlow', 501);
 };
 
-export const sendTestWhatsApp = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { phoneNumber } = req.body;
-    if (!phoneNumber) return errorResponse(res, 'Phone number required', 400);
-
-    const { SmsService } = await import('../services/SmsService.js');
-    await SmsService.sendRecoveryWhatsApp(
-      phoneNumber,
-      'Test User',
-      149900,
-      'INR',
-      (process.env.FRONTEND_URL || 'http://localhost:5173') + '/dashboard?test=1'
-    );
-
-    successResponse(res, { message: 'Test WhatsApp dispatched' });
-  } catch (err) { next(err); }
+export const sendTestWhatsApp = async (_req: AuthRequest, res: Response) => {
+  return errorResponse(res, 'WhatsApp is not available in StripeFlow', 501);
 };

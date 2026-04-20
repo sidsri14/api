@@ -2,6 +2,7 @@ import type { Response, NextFunction } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { prisma } from '../utils/prisma.js';
 import { InvoiceService } from '../services/InvoiceService.js';
+import { generateInvoicePDF } from '../services/pdf.service.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 
 export class InvoiceController {
@@ -89,6 +90,22 @@ export class InvoiceController {
         where: { id: req.params.id, userId: req.userId! }
       });
       successResponse(res, { success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getPdf(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const invoice = await prisma.invoice.findUnique({
+        where: { id: req.params.id, userId: req.userId! },
+        include: { client: true, user: true, items: true },
+      });
+      if (!invoice) return errorResponse(res, 'Invoice not found', 404);
+      const pdf = await generateInvoicePDF(invoice as any);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${invoice.number}.pdf"`);
+      return res.send(pdf);
     } catch (err) {
       next(err);
     }

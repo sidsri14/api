@@ -1,5 +1,4 @@
 import { prisma } from '../utils/prisma.js';
-import { RazorpayService } from './RazorpayService.js';
 import { StripeBillingService } from './StripeBillingService.js';
 
 const PLAN_IDS = {
@@ -25,12 +24,8 @@ export class BillingService {
       throw { status: 500, message: `Razorpay Plan ID for '${plan}' is not configured on the server.` };
     }
 
-    const subscription = await RazorpayService.createRazorpaySubscription({
-      plan_id: planId,
-      customer_notify: 1,
-      total_count: 120,
-      notes: { userId, plan },
-    });
+    throw { status: 400, message: 'Razorpay subscriptions are no longer supported. Use Stripe billing.' };
+    const subscription = { id: '' }; // unreachable, satisfies type
 
     await prisma.subscription.create({
       data: {

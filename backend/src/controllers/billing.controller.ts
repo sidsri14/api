@@ -1,7 +1,7 @@
+import crypto from 'crypto';
 import type { Response, NextFunction } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { BillingService } from '../services/BillingService.js';
-import { RazorpayService } from '../services/RazorpayService.js';
 import { StripeBillingService } from '../services/StripeBillingService.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import pino from 'pino';
@@ -90,7 +90,8 @@ export const billingWebhook = async (req: any, res: Response, next: NextFunction
     const rawBody = (req.body as Buffer).toString('utf8');
     logger.debug({ secret_len: webhookSecret.length }, '[Billing Webhook] Received');
 
-    const isValid = await RazorpayService.verifyWebhookSignature(rawBody, sig, webhookSecret);
+    const expectedSig = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+    const isValid = crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig));
     logger.debug({ isValid }, '[Billing Webhook] Signature check result');
 
     if (!isValid) {
