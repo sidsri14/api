@@ -104,9 +104,9 @@ export function useDashboardData(currentUser: AuthUser | null) {
     mutationFn: (gateway: 'razorpay' | 'stripe' = 'stripe') => 
       api.post('/billing/create-checkout', { plan: 'pro', gateway }),
     onSuccess: (response) => {
-      const { url } = response.data.data;
-      if (url) {
-        window.location.href = url;
+      const { checkoutUrl } = response.data.data;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
       } else {
         toast.success('Pro plan activated!');
         setShowUpgradeModal(false);

@@ -77,7 +77,7 @@ export class StripeBillingService {
 
     return {
       id: session.id,
-      url: session.url,
+      checkoutUrl: session.url,
     };
   }
 
@@ -113,7 +113,7 @@ export class StripeBillingService {
 
     return {
       id: session.id,
-      url: session.url,
+      checkoutUrl: session.url,
     };
   }
 

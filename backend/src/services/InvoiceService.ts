@@ -60,7 +60,7 @@ export class InvoiceService {
     });
 
     // 6. Send Email via Resend
-    await sendInvoiceEmail(data.clientEmail, pdfUrl, stripeSession.url!, {
+    await sendInvoiceEmail(data.clientEmail, pdfUrl, stripeSession.checkoutUrl!, {
       ...invoice,
       dueDate: data.dueDate
     });
@@ -74,7 +74,7 @@ export class InvoiceService {
     return {
       success: true,
       ...updatedInvoice,
-      paymentUrl: stripeSession.url
+      paymentUrl: stripeSession.checkoutUrl
     };
   }
 }

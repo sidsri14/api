@@ -39,7 +39,7 @@ export class BillingService {
 
     return {
       subscriptionId: subscription.id,
-      url: (subscription as any).short_url,
+      checkoutUrl: (subscription as any).short_url,
     };
   }
 

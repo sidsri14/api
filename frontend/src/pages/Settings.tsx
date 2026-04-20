@@ -61,12 +61,12 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
     }
   };
 
-  const handleCheckout = async (plan: 'starter' | 'pro') => {
+  const handleCheckout = async (plan: 'starter' | 'pro', gateway: 'stripe' | 'razorpay' = 'stripe') => {
     setLoading(true);
     try {
-      const { data } = await api.post('/billing/create-subscription', { plan });
-      if (data.success && data.data.shortUrl) {
-        window.location.href = data.data.shortUrl;
+      const { data } = await api.post('/billing/create-subscription', { plan, gateway });
+      if (data.success && data.data.checkoutUrl) {
+        window.location.href = data.data.checkoutUrl;
       } else {
         toast.error('Failed to initiate checkout link');
         setLoading(false);
