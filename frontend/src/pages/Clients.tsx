@@ -1,6 +1,6 @@
-import React, { FC, useState } from 'react';
+import { type FC, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, User, Mail, Phone, Building, Trash2, Edit2 } from 'lucide-react';
+import { Plus, User, Mail, Phone, Building, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';

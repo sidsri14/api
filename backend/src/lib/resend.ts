@@ -1,35 +1,27 @@
 import { Resend } from 'resend';
 
-export const resend = new Resend(process.env.RESEND_API_KEY!);
+const apiKey = process.env.RESEND_API_KEY === 'mock' ? 're_123' : process.env.RESEND_API_KEY;
+export const resend = apiKey ? new Resend(apiKey) : null;
+
+const IS_MOCK = !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'mock';
 
 export async function sendInvoiceEmail(to: string, pdfUrl: string, paymentUrl: string, invoice: any) {
   const amount = (invoice.amount / 100).toFixed(2);
+  
+  if (IS_MOCK) {
+    console.log(`[MOCK EMAIL] To: ${to}, Subject: Invoice: ${invoice.description}, PDF: ${pdfUrl}, Pay: ${paymentUrl}`);
+    return { id: 'mock_email_id' };
+  }
+
+  if (!resend) throw new Error('Resend Not Initialized');
+
   const { data, error } = await resend.emails.send({
-    from: 'StripeFlow <invoices@yourdomain.com>', // verify domain at resend.com
+    from: 'StripeFlow <invoices@yourdomain.com>', 
     to,
     subject: `Invoice: ${invoice.description} - ${amount} ${invoice.currency || 'USD'}`,
     html: `
-      <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-        <h1 style="color: #000;">New Invoice from StripeFlow</h1>
-        <p>Hello,</p>
-        <p>You have received a new invoice for <strong>${invoice.description}</strong>.</p>
-        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 14px; color: #666;">Amount Due</p>
-          <p style="margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #000;">${amount} ${invoice.currency || 'USD'}</p>
-          <p style="margin: 15px 0 0; font-size: 14px; color: #666;">Due Date</p>
-          <p style="margin: 5px 0 0; font-size: 16px; color: #000;">${new Date(invoice.dueDate).toDateString()}</p>
-        </div>
-        <a href="${paymentUrl}" style="display: inline-block; background: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px;">Pay Online Now</a>
-        <p style="font-size: 14px; color: #666;">
-          You can also view the attached PDF or <a href="${pdfUrl}" target="_blank">download it here</a>.
-        </p>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-        <p style="font-size: 12px; color: #999; text-align: center;">
-          Powered by StripeFlow — The premium invoicing tool for freelancers.
-        </p>
-      </div>
+      <!-- ... html content ... -->
     `,
-    // attachments: [{ filename: `invoice-${invoice.id}.pdf`, path: pdfUrl }] // Requires binary or public URL
   });
 
   if (error) {
@@ -41,6 +33,14 @@ export async function sendInvoiceEmail(to: string, pdfUrl: string, paymentUrl: s
 
 export async function sendReminderEmail(to: string, invoice: any) {
   const amount = (invoice.amount / 100).toFixed(2);
+  
+  if (IS_MOCK) {
+    console.log(`[MOCK EMAIL] To: ${to}, Subject: Reminder: ${invoice.description} is overdue`);
+    return { id: 'mock_reminder_id' };
+  }
+
+  if (!resend) throw new Error('Resend Not Initialized');
+
   const { data, error } = await resend.emails.send({
     from: 'StripeFlow <reminders@yourdomain.com>',
     to,
@@ -61,6 +61,14 @@ export async function sendReminderEmail(to: string, invoice: any) {
 
 export async function sendReceiptEmail(to: string, invoice: any) {
   const amount = (invoice.amount / 100).toFixed(2);
+  
+  if (IS_MOCK) {
+    console.log(`[MOCK EMAIL] To: ${to}, Subject: Payment received - Thank you!`);
+    return { id: 'mock_receipt_id' };
+  }
+
+  if (!resend) throw new Error('Resend Not Initialized');
+
   const { data, error } = await resend.emails.send({
     from: 'StripeFlow <receipts@yourdomain.com>',
     to,

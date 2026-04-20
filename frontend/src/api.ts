@@ -57,7 +57,7 @@ api.interceptors.request.use(async (config) => {
 });
 
 // Public paths that should never trigger a /login redirect on 401
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/', '/terms', '/privacy', '/contact'];
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/', '/terms', '/privacy', '/contact', '/demo'];
 
 // Intercept responses for global error handling (e.g., 401s)
 api.interceptors.response.use(

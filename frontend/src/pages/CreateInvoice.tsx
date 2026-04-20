@@ -1,7 +1,7 @@
-import React, { FC, useState } from 'react';
+import { type FC, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Save, Send, Users, DollarSign, Calendar, FileText } from 'lucide-react';
+import { ChevronLeft, Send, Users, DollarSign, Calendar, FileText } from 'lucide-react';
 import { api } from '../api';
 import toast from 'react-hot-toast';
 
@@ -25,7 +25,7 @@ const CreateInvoice: FC = () => {
     }
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const toastId = toast.loading('Generating invoice & Stripe link...');
@@ -34,7 +34,7 @@ const CreateInvoice: FC = () => {
         ...formData,
         amount: Math.round(parseFloat(formData.amount) * 100) // Convert to cents
       };
-      const { data } = await api.post('/invoices', payload);
+      await api.post('/invoices', payload);
       toast.success('Invoice created and email sent!', { id: toastId });
       navigate('/invoices');
     } catch (err: any) {

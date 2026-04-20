@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 
-import { Moon, Sun, LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users, Webhook, KeyRound, Shield } from 'lucide-react';
+import { Moon, Sun, LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { api } from './api';
 
@@ -24,8 +24,6 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Team = lazy(() => import('./pages/Team'));
-const Webhooks = lazy(() => import('./pages/Webhooks'));
-const ApiKeys = lazy(() => import('./pages/ApiKeys'));
 const Security = lazy(() => import('./pages/Security'));
 
 export type AuthUser = {
@@ -250,7 +248,6 @@ function PageTitle() {
       '/forgot-password': 'Reset Password | StripeFlow',
       '/reset-password': 'New Password | StripeFlow',
       '/verify-email': 'Verify Account | StripeFlow',
-      '/payment-status': 'Payment Status | StripeFlow',
     };
     document.title = titles[location.pathname] || 'StripeFlow | Invoicing for Freelancers';
   }, [location.pathname]);
@@ -323,7 +320,6 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/payment-status" element={<PaymentStatus />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/contact" element={<Contact />} />

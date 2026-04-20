@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, API_URL } from '../api';
 import toast from 'react-hot-toast';
-import { ShieldPlus, Mail, Lock, UserPlus, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, Lock, UserPlus, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
 import type { AuthUser } from '../App';
 
@@ -65,11 +65,11 @@ const Register: React.FC<Props> = ({ onRegisterSuccess }) => {
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-stone-800 border border-warm-border dark:border-stone-700 rounded-2xl p-10 shadow-card">
           <div className="flex flex-col items-center mb-10">
-            <div className="bg-stone-700 dark:bg-stone-600 p-4 rounded-xl shadow-md mb-6">
-              <ShieldPlus className="w-9 h-9 text-white" />
+            <div className="bg-stone-900 p-4 rounded-xl shadow-lg mb-6">
+              <CheckCircle2 className="w-9 h-9 text-white" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-stone-800 dark:text-stone-100">
-              PayRecover
+            <h1 className="text-2xl font-black tracking-tighter text-stone-900 dark:text-stone-100 uppercase">
+              StripeFlow
             </h1>
           </div>
 
@@ -95,7 +95,7 @@ const Register: React.FC<Props> = ({ onRegisterSuccess }) => {
             <div className="space-y-1.5">
               <label htmlFor="reg-name" className="text-xs font-semibold uppercase tracking-wider text-stone-400 ml-1">Full Name</label>
               <div className="relative">
-                <ShieldPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" aria-hidden="true" />
+                <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" aria-hidden="true" />
                 <input
                   id="reg-name"
                   type="text"

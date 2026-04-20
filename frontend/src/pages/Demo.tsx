@@ -1,6 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, ShieldCheck, CreditCard, Download, FileText, ExternalLink } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, CreditCard, Download, FileText } from 'lucide-react';
 import { api } from '../api';
 import { formatAmount } from '../utils/format';
 import { motion } from 'framer-motion';

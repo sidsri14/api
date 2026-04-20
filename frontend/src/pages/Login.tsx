@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, API_URL } from '../api';
 import toast from 'react-hot-toast';
-import { ShieldAlert, Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
 import type { AuthUser } from '../App';
 
 interface Props {
@@ -43,11 +43,11 @@ const Login: React.FC<Props> = ({ onLoginSuccess }) => {
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-stone-800 border border-warm-border dark:border-stone-700 rounded-2xl p-10 shadow-card">
           <div className="flex flex-col items-center mb-10">
-            <div className="bg-stone-700 dark:bg-stone-600 p-3.5 rounded-xl shadow-md mb-6">
-              <ShieldAlert className="w-8 h-8 text-white" />
+            <div className="bg-stone-900 p-3.5 rounded-xl shadow-lg mb-6">
+              <CheckCircle2 className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-stone-800 dark:text-stone-100">
-              PayRecover
+            <h1 className="text-2xl font-black tracking-tighter text-stone-900 dark:text-stone-100 uppercase">
+              StripeFlow
             </h1>
           </div>
 

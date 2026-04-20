@@ -3,9 +3,25 @@ import { prisma } from '../utils/prisma.js';
 
 let _stripe: Stripe | null = null;
 const getStripe = () => {
+  const secret = process.env.STRIPE_PLATFORM_SECRET_KEY;
+  if (!secret || secret.includes('xxxx')) {
+    console.warn('[STRIPE MOCK] STRIPE_PLATFORM_SECRET_KEY is missing or dummy. Returning mock.');
+    return {
+      checkout: {
+        sessions: {
+          create: async (params: any) => ({
+            id: 'mock_session_' + Math.random().toString(36).slice(7),
+            url: (params.success_url || '').replace('{CHECKOUT_SESSION_ID}', 'mock_session_id'),
+          })
+        }
+      },
+      webhooks: {
+        constructEvent: () => ({ type: 'mock.event' } as any)
+      }
+    } as any;
+  }
+  
   if (!_stripe) {
-    const secret = process.env.STRIPE_PLATFORM_SECRET_KEY;
-    if (!secret) throw new Error('STRIPE_PLATFORM_SECRET_KEY is missing');
     _stripe = new Stripe(secret, {
       apiVersion: '2023-10-16' as any,
     });

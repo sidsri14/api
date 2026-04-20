@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
+import { type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, FileText, ExternalLink, Trash2, Clock, Globe } from 'lucide-react';
+import { Plus, FileText, ExternalLink, Trash2, Clock } from 'lucide-react';
 import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAmount } from '../utils/format';
@@ -132,7 +132,7 @@ const InvoiceList: FC = () => {
                             <FileText className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => window.open(`${process.env.FRONTEND_URL}/demo?invoice=${invoice.id}`, '_blank')}
+                            onClick={() => window.open(`${window.location.origin}/demo?invoice=${invoice.id}`, '_blank')}
                             className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-emerald-500 transition-all"
                             title="Checkout Link"
                           >

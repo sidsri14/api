@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, RotateCcw, CheckCircle2, Smartphone, Monitor } from 'lucide-react';
+import { TrendingUp, RotateCcw, CheckCircle2, Smartphone, Monitor, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { cn } from '../../utils/cn';
 

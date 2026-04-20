@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import { type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, Shield, Zap, Globe, FileText, Send, CreditCard } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Zap, FileText, Send, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LandingPage: FC = () => {

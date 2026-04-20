@@ -106,7 +106,7 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
     }
   };
 
-  const webhookUrl = `${window.location.protocol}//pay-recovery-web-production.up.railway.app/api/webhooks/razorpay`;
+  const webhookUrl = `${window.location.origin}/api/webhook/stripe`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(webhookUrl);
@@ -329,23 +329,23 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
               </div>
               
               <div className="space-y-3">
-                 <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl">
-                   <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 leading-normal">
-                     Step 1: Go to your Razorpay Dashboard.<br/>
-                     Step 2: Add a new Webhook with the URL above.<br/>
-                     Step 3: Select the "payment.failed" event.<br/>
-                     Step 4: Save and everything will be captured automatically.
-                   </p>
-                 </div>
-                 <a 
-                   href="https://razorpay.com/docs/webhooks/setup/" 
-                   target="_blank" 
-                   rel="noreferrer"
-                   className="flex items-center justify-between p-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-xl hover:border-stone-200 transition-all text-[10px] font-bold text-stone-600 dark:text-stone-400"
-                 >
-                   Razorpay Webhook Guide
-                   <ExternalLink className="w-3 h-3" />
-                 </a>
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                    <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-normal">
+                      Step 1: Go to your Stripe Dashboard.<br/>
+                      Step 2: Add a new Webhook with the URL above.<br/>
+                      Step 3: Select the "checkout.session.completed" event.<br/>
+                      Step 4: Save and everything will be captured automatically.
+                    </p>
+                  </div>
+                  <a 
+                    href="https://stripe.com/docs/webhooks/setup/" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-4 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-xl hover:border-stone-200 transition-all text-[10px] font-bold text-stone-600 dark:text-stone-400"
+                  >
+                    Stripe Webhook Guide
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
               </div>
             </div>
           </section>
@@ -383,7 +383,7 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
                       <img src={form.logoUrl} alt="Logo" className="h-full object-contain" />
                     ) : (
                       <span className="text-2xl font-black italic tracking-tighter" style={{ color: form.primaryColor }}>
-                        {form.companyName || 'PayRecover'}
+                        {form.companyName || 'StripeFlow'}
                       </span>
                     )}
                   </div>
@@ -424,7 +424,7 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
                 </div>
                 <div className="px-10 py-6 bg-stone-50 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-800 text-center">
                   <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">
-                    Powered by PayRecover · Automated Recovery
+                    Powered by StripeFlow · High-Convert
                   </p>
                 </div>
               </div>
