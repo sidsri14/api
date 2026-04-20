@@ -1,4 +1,4 @@
-import PdfPrinter from 'pdfmake';
+import PdfPrinter from 'pdfmake/src/printer';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import fs from 'fs';
 import path from 'path';
