@@ -47,7 +47,7 @@ const Login: React.FC<Props> = ({ onLoginSuccess }) => {
               <CheckCircle2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-black tracking-tighter text-stone-900 dark:text-stone-100 uppercase">
-              StripePay
+              StripeFlow
             </h1>
           </div>
 

@@ -1,7 +1,7 @@
-# StripePay 💎
+# StripeFlow 💎
 ### **Elite Payment Recovery & Invoicing for Modern Businesses**
 
-StripePay is a world-class failed payment recovery engine. We transform the tedious task of chasing payments into an automated, high-converting revenue stream. Designed for freelancers and D2C brands who demand premium aesthetics and absolute reliability.
+StripeFlow is a world-class failed payment recovery engine. We transform the tedious task of chasing payments into an automated, high-converting revenue stream. Designed for freelancers and D2C brands who demand premium aesthetics and absolute reliability.
 
 ---
 

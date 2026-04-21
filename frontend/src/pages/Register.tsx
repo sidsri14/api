@@ -69,7 +69,7 @@ const Register: React.FC<Props> = ({ onRegisterSuccess }) => {
               <CheckCircle2 className="w-9 h-9 text-white" />
             </div>
             <h1 className="text-2xl font-black tracking-tighter text-stone-900 dark:text-stone-100 uppercase">
-              StripePay
+              StripeFlow
             </h1>
           </div>
 

@@ -49,7 +49,7 @@ const LandingPage: FC = () => {
             <div className="bg-slate-900 dark:bg-emerald-600 p-2.5 rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-emerald-500/10">
               <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">StripePay</span>
+            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">StripeFlow</span>
           </motion.div>
           
           <div className="flex items-center gap-4 sm:gap-8">
@@ -196,7 +196,7 @@ const LandingPage: FC = () => {
             <div className="bg-slate-900 border border-slate-700 p-2 rounded-xl">
               <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">StripePay</span>
+            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">StripeFlow</span>
           </div>
           
           <div className="flex flex-col items-center md:items-end gap-6">
@@ -206,7 +206,7 @@ const LandingPage: FC = () => {
               <Link to="/contact" className="hover:text-emerald-500 transition-colors">Contact</Link>
             </div>
             <p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">
-              &copy; 2026 StripePay Core Engine &middot; Premium Recovery Flow
+              &copy; 2026 StripeFlow Core Engine &middot; Premium Recovery Flow
             </p>
           </div>
         </div>
