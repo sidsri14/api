@@ -90,9 +90,10 @@ export const inviteUser = async (req: AuthRequest, res: Response, next: NextFunc
 
     if (!sender) return errorResponse(res, 'Insufficient permissions', 403);
 
-    // Find the user to invite
+    // Find the user to invite — return the same response whether the email exists
+    // or not to prevent registered-email enumeration.
     const userToInvite = await prisma.user.findUnique({ where: { email } });
-    if (!userToInvite) return errorResponse(res, 'User not found. They must register first.', 404);
+    if (!userToInvite) return successResponse(res, { queued: true }, 200);
 
     // Check if already a member
     const existing = await prisma.membership.findFirst({

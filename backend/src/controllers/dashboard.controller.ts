@@ -35,10 +35,18 @@ export const getMetrics = async (req: AuthRequest, res: Response, next: NextFunc
   try {
     const userId = req.userId!;
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const [thisMonth, overdue] = await Promise.all([
-      prisma.invoice.aggregate({ where: { userId, createdAt: { gte: startOfMonth } }, _count: true }),
+    const [paidThisMonth, overdueCount] = await Promise.all([
+      prisma.invoice.aggregate({
+        where: { userId, status: 'PAID', paidAt: { gte: startOfMonth } },
+        _sum: { amount: true },
+        _count: true,
+      }),
       prisma.invoice.count({ where: { userId, status: 'OVERDUE' } }),
     ]);
-    successResponse(res, { paidThisMonth: 0, overdueCount: overdue });
+    successResponse(res, {
+      paidThisMonth: paidThisMonth._sum.amount ?? 0,
+      paidCountThisMonth: paidThisMonth._count,
+      overdueCount,
+    });
   } catch (err) { next(err); }
 };

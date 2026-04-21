@@ -2,7 +2,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { sendEmail } from '../services/resend.service.js';
 import { successResponse } from '../utils/apiResponse.js';
 
-const escapeHtml = (s: string) =>
+// HTML-escape only for HTML body content — never for plain-text fields like subjects
+const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
 
 export const submitContact = async (req: Request, res: Response, next: NextFunction) => {
@@ -12,8 +13,9 @@ export const submitContact = async (req: Request, res: Response, next: NextFunct
     if (to) {
       await sendEmail({
         to,
-        subject: `[StripeFlow Contact] Message from ${escapeHtml(name)}`,
-        html: `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p><strong>Message:</strong><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>`,
+        // Subject is plain text — do NOT HTML-escape it (produces literal &amp; etc. in inbox)
+        subject: `[StripeFlow Contact] Message from ${name}`,
+        html: `<p><strong>Name:</strong> ${esc(name)}</p><p><strong>Email:</strong> ${esc(email)}</p><p><strong>Message:</strong><br/>${esc(message).replace(/\n/g, '<br/>')}</p>`,
       });
     } else {
       console.log(`[Contact] From: ${name} <${email}>\n${message}`);

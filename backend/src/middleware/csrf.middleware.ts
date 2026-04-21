@@ -19,10 +19,12 @@ export const csrfCheck = (req: Request, res: Response, next: NextFunction): void
   const cookieToken = req.cookies?.['csrf-token'];
   const headerToken = String(req.headers['x-csrf-token'] ?? '');
 
-  const valid = cookieToken &&
-    headerToken.length > 0 &&
-    cookieToken.length === headerToken.length &&
-    crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
+  const cookieBuf = cookieToken ? Buffer.from(cookieToken) : null;
+  const headerBuf = headerToken.length > 0 ? Buffer.from(headerToken) : null;
+  const valid = cookieBuf !== null &&
+    headerBuf !== null &&
+    cookieBuf.byteLength === headerBuf.byteLength &&
+    crypto.timingSafeEqual(cookieBuf, headerBuf);
 
   if (!valid) {
     // Distinguish missing token (likely a dev/tool mistake) from a wrong token

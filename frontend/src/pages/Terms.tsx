@@ -23,7 +23,7 @@ const Terms = () => {
             Acceptance of Terms
           </h2>
           <p>
-            By accessing or using StripePay, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
+            By accessing or using StripeFlow, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
           </p>
         </section>
 
@@ -33,7 +33,7 @@ const Terms = () => {
             Use License
           </h2>
           <p className="mb-4">
-            StripePay grants you a limited, non-exclusive, non-transferable license to use the service for your business payment recovery needs. You may not:
+            StripeFlow grants you a limited, non-exclusive, non-transferable license to use the service for your business payment recovery needs. You may not:
           </p>
           <ul className="list-disc pl-6 space-y-2 text-sm italic">
             <li>Attempt to decompile or reverse engineer any software contained in the platform</li>
@@ -49,7 +49,7 @@ const Terms = () => {
             Data Processor Role
           </h2>
           <p>
-            StripePay acts as a <strong className="text-stone-900 dark:text-stone-100">Data Processor</strong> on behalf of you (the Merchant), who remains the Data Controller. You are responsible for ensuring your customers' consent for receiving recovery communications.
+            StripeFlow acts as a <strong className="text-stone-900 dark:text-stone-100">Data Processor</strong> on behalf of you (the Merchant), who remains the Data Controller. You are responsible for ensuring your customers' consent for receiving recovery communications.
           </p>
         </section>
 
@@ -59,7 +59,7 @@ const Terms = () => {
             Payments & Subscriptions
           </h2>
           <p>
-            You agree to pay all fees associated with your selected plan. Fees are non-refundable except as required by law. StripePay reserves the right to change its pricing with a 30-day notice to active users.
+            You agree to pay all fees associated with your selected plan. Fees are non-refundable except as required by law. StripeFlow reserves the right to change its pricing with a 30-day notice to active users.
           </p>
         </section>
 
@@ -69,7 +69,7 @@ const Terms = () => {
             Service Availability
           </h2>
           <p>
-            While we strive for 99.9% uptime, StripePay is provided on an "as-is" and "as-available" basis. We are not liable for any revenue loss arising from service interruptions or delays in recovery communication.
+            While we strive for 99.9% uptime, StripeFlow is provided on an "as-is" and "as-available" basis. We are not liable for any revenue loss arising from service interruptions or delays in recovery communication.
           </p>
         </section>
 

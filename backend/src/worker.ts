@@ -61,8 +61,7 @@ async function runPiiPrune(): Promise<void> {
     data: { clientEmail: '[removed]' },
   });
 
-  // 3. Remove phone numbers from clients not linked to active invoices
-  //    that were last updated beyond the retention window.
+  // 3. Remove phone numbers from clients not updated recently
   const anonClients = await prisma.client.updateMany({
     where: {
       updatedAt: { lt: cutoff },
@@ -71,8 +70,18 @@ async function runPiiPrune(): Promise<void> {
     data: { phone: null },
   });
 
+  // 4. Delete old webhook delivery records — response bodies can contain PII
+  const deletedDeliveries = await prisma.webhookDelivery.deleteMany({
+    where: { attemptedAt: { lt: cutoff } },
+  });
+
   logger.info(
-    { deletedLogs: deletedLogs.count, anonInvoices: anonInvoices.count, anonClients: anonClients.count },
+    {
+      deletedLogs: deletedLogs.count,
+      anonInvoices: anonInvoices.count,
+      anonClients: anonClients.count,
+      deletedDeliveries: deletedDeliveries.count,
+    },
     '[PII Prune] Complete'
   );
 }
@@ -82,6 +91,9 @@ const webhookWorker = new Worker(
   async (job) => {
     if (job.name === 'webhook-delivery') return processWebhookDeliveryJob(job);
     if (job.name === 'pii-prune') return runPiiPrune();
+    // Unknown job names must fail explicitly so they appear in the BullMQ dead-letter
+    // queue rather than silently succeeding and hiding the misconfiguration.
+    throw new Error(`Unknown job name: ${job.name}`);
   },
   { connection: workerConnection, concurrency: 5 }
 );

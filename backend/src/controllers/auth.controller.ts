@@ -137,9 +137,9 @@ export const updateBranding = async (req: AuthRequest, res: Response, next: Next
       if (typeof brandSettings !== 'object' || Array.isArray(brandSettings)) {
         return errorResponse(res, 'brandSettings must be an object', 400);
       }
-      const { primaryColor, logoUrl, signature, companyName } = brandSettings as Record<string, unknown>;
-      if (primaryColor !== undefined && !/^#[0-9a-fA-F]{6}$/.test(String(primaryColor))) {
-        return errorResponse(res, 'primaryColor must be a valid hex color (e.g. #10b981)', 400);
+      const { accentColor, logoUrl, signature, companyName } = brandSettings as Record<string, unknown>;
+      if (accentColor !== undefined && !/^#[0-9a-fA-F]{6}$/.test(String(accentColor))) {
+        return errorResponse(res, 'accentColor must be a valid hex color (e.g. #10b981)', 400);
       }
       if (logoUrl) {
         try { const u = new URL(String(logoUrl)); if (u.protocol !== 'https:') throw new Error(); }

@@ -42,7 +42,7 @@ const Clients: FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure? This will not delete their invoices.')) return;
+    if (!confirm('Delete this client? All their invoices will also be permanently deleted.')) return;
     try {
       await api.delete(`/clients/${id}`);
       toast.success('Client removed');

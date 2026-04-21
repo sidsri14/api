@@ -122,6 +122,37 @@ export class InvoiceController {
     }
   }
 
+  static async remind(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const userId = String(req.userId);
+      const invoice = await prisma.invoice.findFirst({
+        where: { id, userId, status: { notIn: ['PAID', 'CANCELLED'] } },
+      });
+      if (!invoice) return errorResponse(res, 'Invoice not found or already resolved', 404);
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      let brandData: Record<string, string> = {};
+      try { brandData = user?.brandSettings ? JSON.parse(user.brandSettings) : {}; } catch { /* use defaults */ }
+
+      const { sendReminderEmail } = await import('../lib/resend.js');
+      await sendReminderEmail(invoice.clientEmail, invoice, {
+        accentColor: brandData.accentColor,
+        companyName: brandData.companyName,
+        emailTone: user?.brandEmailTone || 'professional',
+      });
+
+      await prisma.invoice.update({
+        where: { id },
+        data: { remindersSent: { increment: 1 } },
+      });
+
+      successResponse(res, { sent: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getPdf(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const id = String(req.params.id);

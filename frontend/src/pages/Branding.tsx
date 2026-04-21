@@ -11,7 +11,7 @@ const Branding: FC = () => {
   const [settings, setSettings] = useState({
     companyName: '',
     supportEmail: '',
-    brandColor: '#059669',
+    accentColor: '#059669',
     emailTone: 'professional',
     emailSubject: 'Payment recovery for {invoice_number}',
     showLogo: true,
@@ -26,7 +26,7 @@ const Branding: FC = () => {
         setSettings({
           companyName: brandObj.companyName || '',
           supportEmail: brandObj.supportEmail || user.email,
-          brandColor: brandObj.brandColor || '#059669',
+          accentColor: brandObj.accentColor || '#059669',
           emailTone: user.brandEmailTone || 'professional',
           emailSubject: user.brandEmailSubject || 'Payment recovery for {invoice_number}',
           showLogo: brandObj.showLogo !== false,
@@ -46,16 +46,15 @@ const Branding: FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // We update both the brandSettings JSON and the explicit email fields
-      await api.patch('/auth/profile', {
+      await api.patch('/auth/branding', {
         brandEmailTone: settings.emailTone,
         brandEmailSubject: settings.emailSubject,
-        brandSettings: JSON.stringify({
+        brandSettings: {
           companyName: settings.companyName,
           supportEmail: settings.supportEmail,
-          brandColor: settings.brandColor,
+          accentColor: settings.accentColor,
           showLogo: settings.showLogo,
-        })
+        },
       });
       toast.success('Branding updated successfully');
     } catch (err) {

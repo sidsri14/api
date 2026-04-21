@@ -26,7 +26,8 @@ export const invoiceWorker = new Worker(
 
     try {
       const user = await prisma.user.findUnique({ where: { id: invoice.userId } });
-      const brandData = user?.brandSettings ? JSON.parse(user.brandSettings) : {};
+      let brandData: Record<string, string> = {};
+      try { brandData = user?.brandSettings ? JSON.parse(user.brandSettings) : {}; } catch { /* malformed JSON — use defaults */ }
 
       await sendReminderEmail(invoice.clientEmail, invoice, {
         accentColor: brandData.accentColor,
@@ -36,8 +37,11 @@ export const invoiceWorker = new Worker(
       logger.info({ invoiceId, type }, 'Reminder email sent successfully');
 
       if (type === 'reminder2') {
-        await prisma.invoice.update({
-          where: { id: invoiceId },
+        // Atomic guard: only flip to OVERDUE if the invoice is still unpaid.
+        // A concurrent payment between the fetch above and this write would
+        // otherwise revert a PAID invoice back to OVERDUE.
+        await prisma.invoice.updateMany({
+          where: { id: invoiceId, status: { notIn: ['PAID', 'CANCELLED'] } },
           data: { status: 'OVERDUE' as const },
         });
       }

@@ -165,14 +165,15 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+// Singleton queue for stats — avoids opening a new connection on every request
+const statsQueue = new Queue('payment-recovery', { connection: redisConnection });
+
 // Queue Stats (authenticated — for dashboard use)
 app.get('/api/queue/stats', requireAuth, async (_req, res) => {
   try {
-    const queue = new Queue('payment-recovery', { connection: redisConnection });
-    const counts = await queue.getJobCounts('waiting', 'active', 'failed', 'delayed', 'completed');
+    const counts = await statsQueue.getJobCounts('waiting', 'active', 'failed', 'delayed', 'completed');
     const hb = await redisConnection.get(HEARTBEAT_KEY);
     const workerAge = hb ? Date.now() - parseInt(hb, 10) : null;
-    await queue.close();
     res.json({
       success: true,
       data: {

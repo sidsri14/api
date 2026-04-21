@@ -37,7 +37,7 @@ const Privacy = () => {
             <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest">Data Retention & Scrubbing</h2>
           </div>
           <p>
-            We adhere to a policy of <strong className="text-stone-900 dark:text-stone-100">Storage Limitation</strong>. Personal data related to failed payments is automatically archived or purged within 30 days of a successful recovery or abandonment, unless longer retention is required for legal compliance.
+            We adhere to a policy of <strong className="text-stone-900 dark:text-stone-100">Storage Limitation</strong>. Personal data related to invoices and payment events is automatically anonymised or purged within 90 days (configurable via <code>DATA_RETENTION_DAYS</code>), unless longer retention is required for legal or accounting compliance.
           </p>
         </section>
 
