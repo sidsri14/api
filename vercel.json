@@ -11,7 +11,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://web-production-0b61b.up.railway.app/api/$1"
+      "dest": "https://stripeflow-api.up.railway.app/api/$1"
     },
     {
       "src": "/assets/(.*)",
