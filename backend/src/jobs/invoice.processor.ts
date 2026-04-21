@@ -25,7 +25,14 @@ export const invoiceWorker = new Worker(
     }
 
     try {
-      await sendReminderEmail(invoice.clientEmail, invoice);
+      const user = await prisma.user.findUnique({ where: { id: invoice.userId } });
+      const brandData = user?.brandSettings ? JSON.parse(user.brandSettings) : {};
+
+      await sendReminderEmail(invoice.clientEmail, invoice, {
+        accentColor: brandData.accentColor,
+        companyName: brandData.companyName,
+        emailTone: user?.brandEmailTone || 'professional'
+      });
       logger.info({ invoiceId, type }, 'Reminder email sent successfully');
 
       if (type === 'reminder2') {

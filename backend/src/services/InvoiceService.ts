@@ -60,9 +60,14 @@ export class InvoiceService {
     });
 
     // 6. Send Email via Resend
+    const brandData = user.brandSettings ? JSON.parse(user.brandSettings) : {};
     await sendInvoiceEmail(data.clientEmail, pdfUrl, stripeSession.checkoutUrl!, {
       ...invoice,
       dueDate: data.dueDate
+    }, {
+      accentColor: brandData.accentColor,
+      companyName: brandData.companyName,
+      emailTone: user.brandEmailTone || 'professional'
     });
 
     // 7. Schedule BullMQ reminders

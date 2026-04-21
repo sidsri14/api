@@ -10,7 +10,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
       prisma.invoice.aggregate({ where: { userId }, _sum: { amount: true }, _count: true }),
       prisma.invoice.aggregate({ where: { userId, status: 'PAID' }, _sum: { amount: true }, _count: true }),
       prisma.invoice.aggregate({ where: { userId, status: 'OVERDUE' }, _count: true }),
-      prisma.invoice.aggregate({ where: { userId, status: 'PENDING' }, _count: true }),
+      prisma.invoice.aggregate({ where: { userId, status: 'SENT' }, _count: true }),
     ]);
 
     const totalVolume = total._sum.amount ?? 0;
