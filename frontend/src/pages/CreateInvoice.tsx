@@ -1,12 +1,14 @@
-import { type FC, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { type FC, useState, type FormEvent, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Send, Users, DollarSign, Calendar, FileText } from 'lucide-react';
 import { api } from '../api';
 import toast from 'react-hot-toast';
 
 const CreateInvoice: FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     clientId: '',
@@ -25,6 +27,16 @@ const CreateInvoice: FC = () => {
     }
   });
 
+  // Pre-fill from ?clientId= URL param (e.g. navigating from client card)
+  useEffect(() => {
+    const clientId = searchParams.get('clientId');
+    if (!clientId || !clients) return;
+    const client = clients.find((c: any) => c.id === clientId);
+    if (client) {
+      setFormData(prev => ({ ...prev, clientId: client.id, clientEmail: client.email }));
+    }
+  }, [searchParams, clients]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,6 +48,8 @@ const CreateInvoice: FC = () => {
       };
       await api.post('/invoices', payload);
       toast.success('Invoice created and email sent!', { id: toastId });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       navigate('/invoices');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to create invoice', { id: toastId });

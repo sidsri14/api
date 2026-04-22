@@ -1,5 +1,5 @@
 import { type FC, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, User, Mail, Phone, Building, Trash2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
@@ -17,13 +17,20 @@ const Clients: FC = () => {
     phone: ''
   });
 
-  const { data: clients, isLoading, refetch } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
       const { data } = await api.get('/clients');
       return data.data;
     }
   });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +40,7 @@ const Clients: FC = () => {
       toast.success('Client added!');
       setShowAddModal(false);
       setFormData({ name: '', email: '', company: '', phone: '' });
-      refetch();
+      invalidateAll();
     } catch {
       toast.error('Failed to add client');
     } finally {
@@ -46,7 +53,7 @@ const Clients: FC = () => {
     try {
       await api.delete(`/clients/${id}`);
       toast.success('Client removed');
-      refetch();
+      invalidateAll();
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to remove client';
       toast.error(msg);
