@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { ConfirmModal } from '../components/shared/ConfirmModal';
 
 const Clients: FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ const Clients: FC = () => {
     company: '',
     phone: ''
   });
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: clients, isLoading } = useQuery({
@@ -48,22 +51,26 @@ const Clients: FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this client? All their invoices will also be permanently deleted.')) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
     try {
-      await api.delete(`/clients/${id}`);
+      await api.delete(`/clients/${confirmDelete.id}`);
       toast.success('Client removed');
+      setConfirmDelete(null);
       invalidateAll();
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to remove client';
       toast.error(msg);
+    } finally {
+      setDeleting(false);
     }
   };
 
   const [search, setSearch] = useState('');
 
-  const filteredClients = clients?.filter((c: any) => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredClients = clients?.filter((c: any) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
@@ -131,7 +138,7 @@ const Clients: FC = () => {
                       <Plus className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(client.id)}
+                      onClick={() => setConfirmDelete({ id: client.id, name: client.name })}
                       className="p-2 text-stone-300 hover:text-rose-500 transition-colors"
                       title="Delete Client"
                     >
@@ -139,7 +146,7 @@ const Clients: FC = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <h3 className="text-lg font-bold text-stone-800 dark:text-stone-100">{client.name}</h3>
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs text-stone-500">
@@ -222,6 +229,17 @@ const Clients: FC = () => {
           </motion.div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Client"
+        message={`Delete ${confirmDelete?.name}? All their invoices will also be permanently deleted.`}
+        confirmText="Delete"
+        isDestructive
+        loading={deleting}
+      />
     </div>
   );
 };

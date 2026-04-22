@@ -1,16 +1,21 @@
-import { type FC } from 'react';
+import { type FC, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, FileText, ExternalLink, Trash2, Clock } from 'lucide-react';
 import { api, API_URL } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAmount } from '../utils/format';
 import { cn } from '../utils/cn';
 import toast from 'react-hot-toast';
+import { ConfirmModal } from '../components/shared/ConfirmModal';
 
 const InvoiceList: FC = () => {
   const navigate = useNavigate();
-  const { data: invoices, isLoading, refetch } = useQuery({
+  const queryClient = useQueryClient();
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; desc: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const { data: invoices, isLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
       const { data } = await api.get('/invoices');
@@ -18,15 +23,20 @@ const InvoiceList: FC = () => {
     }
   });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this invoice?')) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
     try {
-      await api.delete(`/invoices/${id}`);
+      await api.delete(`/invoices/${confirmDelete.id}`);
       toast.success('Invoice deleted');
-      refetch();
+      setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to delete invoice';
       toast.error(msg);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -141,7 +151,7 @@ const InvoiceList: FC = () => {
                             <ExternalLink className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(invoice.id); }}
+                            onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: invoice.id, desc: invoice.description }); }}
                             className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/10 text-stone-400 hover:text-rose-500 transition-all"
                             title="Delete"
                           >
@@ -157,6 +167,17 @@ const InvoiceList: FC = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Invoice"
+        message={`Delete "${confirmDelete?.desc}"? This cannot be undone.`}
+        confirmText="Delete"
+        isDestructive
+        loading={deleting}
+      />
     </div>
   );
 };
