@@ -88,7 +88,14 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const user = await updateUserProfile(req.userId!, req.body);
+    const { name, email } = req.body;
+    if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0 || name.length > 200)) {
+      return errorResponse(res, 'name must be a non-empty string under 200 characters', 400);
+    }
+    if (email !== undefined && (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)) {
+      return errorResponse(res, 'email must be a valid address', 400);
+    }
+    const user = await updateUserProfile(req.userId!, { name, email });
     successResponse(res, { user });
   } catch (err: any) {
     if (err.message === 'Email already in use') return errorResponse(res, err.message, 400);

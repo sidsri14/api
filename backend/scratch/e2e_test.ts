@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -18,14 +19,11 @@ async function testInvoiceFlow() {
     console.log(`Created test user: ${user.email}`);
   }
 
-  // 2. Create a Client
-  const client = await prisma.client.create({
-    data: {
-      userId: user.id,
-      name: 'Test Client Corp',
-      email: 'client@testcorp.com',
-      company: 'TestCorp Industries'
-    }
+  // 2. Create a Client (upsert to allow repeated runs without unique-constraint violations)
+  const client = await prisma.client.upsert({
+    where: { userId_email: { userId: user.id, email: 'client@testcorp.com' } },
+    create: { userId: user.id, name: 'Test Client Corp', email: 'client@testcorp.com', company: 'TestCorp Industries' },
+    update: {},
   });
   console.log(`Created test client: ${client.name} (${client.id})`);
 

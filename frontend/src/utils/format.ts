@@ -8,7 +8,7 @@ const CURRENCY_CONFIG: Record<string, { symbol: string, locale: string }> = {
   AUD: { symbol: 'A$', locale: 'en-AU' },
 };
 
-export const formatAmount = (subunits: number, currency = 'INR') => {
+export const formatAmount = (subunits: number, currency = 'USD') => {
   const config = CURRENCY_CONFIG[currency.toUpperCase()] || { symbol: currency + ' ', locale: 'en-US' };
   
   return new Intl.NumberFormat(config.locale, {
@@ -19,7 +19,7 @@ export const formatAmount = (subunits: number, currency = 'INR') => {
 };
 
 export const formatDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  new Date(dateStr).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 export const daysSince = (dateStr: string) =>
   Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { Search, RefreshCw, IndianRupee, AlertTriangle, Download, CheckCircle2, Plus, Filter, Sparkles } from 'lucide-react';
+import { Search, RefreshCw, AlertTriangle, Download, CheckCircle2, Plus, Filter, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';

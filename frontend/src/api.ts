@@ -6,6 +6,7 @@ import type { InternalAxiosRequestConfig } from 'axios';
  */
 interface InternalAxiosRequestConfigWithRetry extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  _skipAuthRedirect?: boolean;
 }
 
 const getDefaultApiUrl = () => {
@@ -65,12 +66,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only redirect to /login if the user is on a protected page.
-      // Public pages (register, forgot-password, etc.) get 401 on /auth/me on load — that's expected.
-      const currentPath = window.location.pathname;
-      const isPublicPage = PUBLIC_PATHS.some(p => currentPath === p || currentPath.startsWith(p + '?'));
-      if (!isPublicPage) {
-        window.location.href = '/login';
+      const config = error.config as InternalAxiosRequestConfigWithRetry;
+      // Skip redirect for requests that opted out (e.g. the initial auth probe in App.tsx)
+      // and for public pages where a 401 is expected and handled by React state.
+      if (!config?._skipAuthRedirect) {
+        const currentPath = window.location.pathname;
+        const isPublicPage = PUBLIC_PATHS.some(p => currentPath === p || currentPath.startsWith(p + '?'));
+        if (!isPublicPage) {
+          window.location.href = '/login';
+        }
       }
     }
     // On CSRF failure, clear cached token. 

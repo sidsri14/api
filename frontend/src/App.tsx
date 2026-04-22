@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 
-import { Moon, Sun, LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users } from 'lucide-react';
+import { LogOut, TrendingUp, Link2, Loader2, Settings as SettingsIcon, Menu, X, Users } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import { api } from './api';
 
@@ -241,7 +241,9 @@ function App() {
 
   const checkAuth = async () => {
     try {
-      const { data } = await api.get('/auth/me');
+      // _skipAuthRedirect: prevents the 401 interceptor from hard-navigating to /login
+      // before React state is initialised — the catch block handles the unauthenticated case.
+      const { data } = await api.get('/auth/me', { _skipAuthRedirect: true } as any);
       if (data.success) {
         setUser(data.data);
       }

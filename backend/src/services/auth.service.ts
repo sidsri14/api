@@ -41,10 +41,16 @@ export const loginUser = async (data: any) => {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   const hashToCheck = user?.password ?? DUMMY_HASH;
   const passwordMatch = await bcrypt.compare(data.password, hashToCheck);
-  if (!user || !passwordMatch) throw new Error('Invalid credentials');
+  if (!user || !passwordMatch) {
+    // Log failed attempts against the user if they exist (enables brute-force detection).
+    if (user) {
+      await logAuditAction(user.id, 'LOGIN_FAILED', 'User', user.id, { email: data.email }).catch(() => {});
+    }
+    throw new Error('Invalid credentials');
+  }
 
   const token = generateToken(user.id);
-  await logAuditAction(user.id, 'USER_LOGIN', 'User', user.id);
+  await logAuditAction(user.id, 'LOGIN_SUCCESS', 'User', user.id);
   return { user: { id: user.id, email: user.email, name: user.name }, token };
 };
 

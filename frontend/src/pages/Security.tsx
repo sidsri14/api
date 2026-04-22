@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Shield, Loader2, Activity, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api } from '../api';
+import { api, API_URL } from '../api';
 import toast from 'react-hot-toast';
 
 interface AuditLog {
@@ -36,9 +36,9 @@ const Security: FC = () => {
     },
   });
 
-  if (isError) {
-    toast.error('Failed to load security logs');
-  }
+  useEffect(() => {
+    if (isError) toast.error('Failed to load security logs');
+  }, [isError]);
 
   const logs: AuditLog[] = data?.logs || [];
   const totalPages = data?.pages || 1;
@@ -64,7 +64,7 @@ const Security: FC = () => {
           </div>
         </div>
         <button
-          onClick={() => window.open('/api/security/audit-logs/export', '_blank')}
+          onClick={() => window.open(`${API_URL}/security/audit-logs/export`, '_blank')}
           className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-700 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-stone-700 dark:hover:bg-stone-600 transition-all"
         >
           <Download className="w-4 h-4" />

@@ -43,11 +43,19 @@ export class ClientController {
     try {
       const id = String(req.params.id);
       const userId = String(req.userId);
-      const existing = await prisma.client.findFirst({ where: { id, userId } });
-      if (!existing) return errorResponse(res, 'Client not found', 404);
-      // Whitelist mutable fields — prevents userId/id injection via req.body
-      const { name, email, phone, company } = req.body;
-      const client = await prisma.client.update({ where: { id }, data: { name, email, phone, company } });
+
+      const updateSchema = clientCreateSchema.partial();
+      const parsed = updateSchema.safeParse(req.body);
+      if (!parsed.success) return errorResponse(res, parsed.error.issues[0]?.message ?? 'Invalid request', 400);
+
+      // Atomic ownership check + update — no TOCTOU gap between findFirst and update
+      const result = await prisma.client.updateMany({
+        where: { id, userId },
+        data: parsed.data,
+      });
+      if (result.count === 0) return errorResponse(res, 'Client not found', 404);
+
+      const client = await prisma.client.findUnique({ where: { id } });
       successResponse(res, client);
     } catch (err) {
       next(err);
