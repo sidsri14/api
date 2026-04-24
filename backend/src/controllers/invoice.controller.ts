@@ -5,6 +5,7 @@ import { prisma } from '../utils/prisma.js';
 import { InvoiceService } from '../services/InvoiceService.js';
 import { generateInvoicePDF } from '../services/pdf.service.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
+import { logAuditAction } from '../services/audit.service.js';
 
 const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AUD', 'CAD', 'SGD', 'AED', 'MYR', 'JPY'] as const;
 
@@ -39,6 +40,7 @@ export class InvoiceController {
         currency
       });
 
+      void logAuditAction(req.userId!, 'INVOICE_CREATE', 'Invoice', result.id, { amount, currency });
       successResponse(res, result);
     } catch (err) {
       next(err);
@@ -116,6 +118,7 @@ export class InvoiceController {
       const userId = String(req.userId);
       const count = await prisma.invoice.deleteMany({ where: { id, userId } });
       if (count.count === 0) return errorResponse(res, 'Invoice not found', 404);
+      void logAuditAction(userId, 'INVOICE_DELETE', 'Invoice', id);
       successResponse(res, { success: true });
     } catch (err) {
       next(err);
