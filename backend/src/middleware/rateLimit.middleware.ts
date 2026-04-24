@@ -65,6 +65,7 @@ const planLimiters = Object.fromEntries(
  * `req.userId` and `req.userPlan` are available.
  */
 export const planAwareLimiter = (req: Request, res: Response, next: NextFunction): void => {
+  if (process.env.NODE_ENV === 'development') return next();
   const plan = (req as AuthRequest).userPlan ?? 'free';
   const limiter = planLimiters[plan] ?? planLimiters['free']!;
   limiter(req, res, next);
