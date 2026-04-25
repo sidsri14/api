@@ -137,9 +137,11 @@ export class DemoController {
         accentColor: '#10b981',
       });
 
-      // 7. Queue 3-day reminder
+      // 7. Queue 3-day reminder (fire-and-forget — Redis unavailable should not fail the demo)
       const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-      await enqueueInvoiceReminder(invoice.id, 'reminder1', THREE_DAYS_MS);
+      enqueueInvoiceReminder(invoice.id, 'reminder1', THREE_DAYS_MS).catch((err) => {
+        console.warn('[Demo] Failed to enqueue reminder (Redis may be unavailable):', err.message);
+      });
 
       return successResponse(res, { 
         id: invoice.id, 
