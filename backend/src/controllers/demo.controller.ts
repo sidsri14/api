@@ -128,14 +128,19 @@ export class DemoController {
       const invoiceWithItems = { ...invoice, items: [], stripeCheckoutUrl: checkoutUrl };
       const pdfBuffer = await generateInvoicePDF(invoiceWithItems as any);
       
-      // 6. Send Email via Resend
+      // 6. Send Email via Resend (fire-and-forget — email failure should not crash the demo)
       const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-      const pdfUrl = `${frontendBase}/demo?invoice=${invoice.id}&preview=pdf`; // Mock PDF URL for demo
-      
-      await sendInvoiceEmail(clientEmail, pdfUrl, checkoutUrl!, invoice, {
-        companyName: 'StripeFlow Demo',
-        accentColor: '#10b981',
-      });
+      const pdfUrl = `${frontendBase}/demo?invoice=${invoice.id}&preview=pdf`;
+      let emailSent = false;
+      try {
+        await sendInvoiceEmail(clientEmail, pdfUrl, checkoutUrl!, invoice, {
+          companyName: 'StripeFlow Demo',
+          accentColor: '#10b981',
+        });
+        emailSent = true;
+      } catch (emailErr: any) {
+        console.warn('[Demo] Email delivery failed (non-fatal):', emailErr.message);
+      }
 
       // 7. Queue 3-day reminder (fire-and-forget — Redis unavailable should not fail the demo)
       const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
@@ -143,10 +148,14 @@ export class DemoController {
         console.warn('[Demo] Failed to enqueue reminder (Redis may be unavailable):', err.message);
       });
 
-      return successResponse(res, { 
-        id: invoice.id, 
+      const message = emailSent
+        ? `Invoice created! Email sent to ${clientEmail}.`
+        : `Invoice created! (Email delivery unavailable — no verified domain yet.)`;
+
+      return successResponse(res, {
+        id: invoice.id,
         checkoutUrl,
-        message: `Invoice created! Email sent to ${clientEmail}.`
+        message,
       });
     } catch (err) {
       next(err);
