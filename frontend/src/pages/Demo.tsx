@@ -1,6 +1,6 @@
 import { type FC, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, ShieldCheck, CreditCard, Download, FileText } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, CreditCard, Download, FileText, Sparkles } from 'lucide-react';
 import { api, API_URL } from '../api';
 import { formatAmount } from '../utils/format';
 import { motion } from 'framer-motion';
@@ -88,9 +88,10 @@ const Demo: FC = () => {
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-emerald-600" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <h2 className="text-2xl font-black text-stone-800">Invoice Created!</h2>
               <p className="text-stone-500 font-medium">{success.message}</p>
+              <p className="text-xs text-stone-400 font-bold">Check your Resend dashboard to confirm delivery.</p>
             </div>
             <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 text-left">
               <label className="text-[10px] font-black uppercase text-stone-400 block mb-1">Stripe Payment Link</label>
