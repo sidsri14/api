@@ -73,12 +73,12 @@ const LandingPage: FC = () => {
             </motion.div>
             
             <motion.div style={{ y: y1 }}>
-            <motion.h1
+              <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-6xl md:text-9xl font-black gradient-heading tracking-tighter leading-[0.85] mb-8"
               >
-                Create invoice.<br /><span className="text-emerald-500 dark:text-emerald-400">Get paid faster.</span>
+                Invoicing for<br /><span className="text-emerald-500 dark:text-emerald-400">deep-work freelancers.</span>
               </motion.h1>
 
               <motion.p
@@ -87,7 +87,7 @@ const LandingPage: FC = () => {
                 transition={{ delay: 0.3 }}
                 className="max-w-2xl mx-auto text-slate-500 dark:text-slate-400 text-lg md:text-xl font-medium leading-relaxed"
               >
-                Global freelance invoicing with automatic email reminders. No chasing. No bullshit. $19/mo.
+                Stop chasing clients. Start getting paid. Automatic reminders, branded PDFs, and Stripe checkout. One flat rate: $19/mo.
               </motion.p>
             </motion.div>
 
@@ -104,10 +104,28 @@ const LandingPage: FC = () => {
                 Start for Free <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
               </button>
               <button 
-                onClick={() => navigate('/demo')} 
+                onClick={() => {
+                  try {
+                    const { data } = await api.get(`/demo/invoice/${invoiceId}`);
+                    setInvoice(data.data);
+                  } catch (err: any) {
+                    if (invoiceId) {
+                      setError(err.response?.data?.error || 'Failed to load invoice.');
+                    }
+                  } finally {
+                    setLoading(false);
+                    if (!invoiceId) {
+                      setLoading(false);
+                      return;
+                    }
+                  }
+                }} 
                 className="btn-secondary !px-12 !py-6 !text-[13px] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:scale-105 active:scale-95"
               >
-                Create Test Invoice
+                <>
+                  <Sparkles className="w-6 h-6" />
+                  Create Test Invoice & Send Email
+                </>
               </button>
             </motion.div>
           </div>
@@ -171,7 +189,7 @@ const LandingPage: FC = () => {
                   {[
                     '3 invoices / month',
                     'Stripe payment links',
-                    'PDF generation',
+                    'Basic PDF generation',
                   ].map(item => (
                     <div key={item} className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-bold text-sm">
                       <CheckCircle2 className="w-4 h-4 text-slate-400 shrink-0" /> {item}
@@ -208,10 +226,10 @@ const LandingPage: FC = () => {
                 <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                   {[
                     'Unlimited invoices',
-                    'Automatic email reminders',
-                    'Client analytics dashboard',
-                    'Custom branding',
-                    'Priority support',
+                    'Auto email sequences',
+                    'Client reporting portal',
+                    'Custom design branding',
+                    'Priority 24/7 support',
                   ].map(item => (
                     <div key={item} className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-bold text-sm">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> {item}
