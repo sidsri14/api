@@ -24,7 +24,7 @@ function getEmailTemplate(content: string, branding: BrandingContext) {
   // accentColor is validated to be a hex color (#rrggbb) before being stored,
   // so it is safe to interpolate directly. All other user-supplied fields use esc().
   const accent = /^#[0-9a-fA-F]{6}$/.test(branding.accentColor || '') ? branding.accentColor! : '#10b981';
-  const company = esc(branding.companyName || 'StripeFlow');
+  const company = esc(branding.companyName || 'InvoiceFlow');
   return `
     <div style="font-family: 'Inter', -apple-system, sans-serif; background: #f9fafb; padding: 40px 20px;">
       <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
@@ -60,8 +60,8 @@ export async function sendInvoiceEmail(to: string, pdfUrl: string, paymentUrl: s
     <p style="text-align: center;"><a href="${esc(pdfUrl)}" style="color: #6b7280; text-decoration: underline; font-size: 14px;">Download PDF Receipt</a></p>
   `;
 
-  const safeName = sanitizeHeaderValue(branding.companyName || 'StripeFlow');
-  const fromAddress = process.env.RESEND_FROM ?? 'noreply@stripeflow.app';
+  const safeName = sanitizeHeaderValue(branding.companyName || 'InvoiceFlow');
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@getinvoiceflow.fun';
   await sendEmail({
     to,
     subject: `Invoice: ${sanitizeHeaderValue(invoice.description)} - ${amount} ${invoice.currency || 'USD'}`,
@@ -101,8 +101,8 @@ export async function sendReminderEmail(to: string, invoice: any, branding: Bran
     <a href="${esc(paymentLink)}" style="display: block; width: 100%; box-sizing: border-box; background: ${accent}; color: #ffffff; padding: 16px; text-align: center; border-radius: 12px; font-weight: 800; text-decoration: none;">View &amp; Pay Now</a>
   `;
 
-  const safeName = sanitizeHeaderValue(branding.companyName || 'StripeFlow');
-  const fromAddress = process.env.RESEND_FROM ?? 'noreply@stripeflow.app';
+  const safeName = sanitizeHeaderValue(branding.companyName || 'InvoiceFlow');
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@getinvoiceflow.fun';
   await sendEmail({
     to,
     subject: `${tone === 'urgent' ? 'URGENT: ' : ''}Payment Reminder for ${sanitizeHeaderValue(invoice.description)}`,
@@ -125,8 +125,8 @@ export async function sendReceiptEmail(to: string, invoice: any, branding: Brand
     <p style="color: #6b7280; font-size: 14px;">Invoice ID: #${esc(invoice.id.slice(-8).toUpperCase())}</p>
   `;
 
-  const safeName = sanitizeHeaderValue(branding.companyName || 'StripeFlow');
-  const fromAddress = process.env.RESEND_FROM ?? 'noreply@stripeflow.app';
+  const safeName = sanitizeHeaderValue(branding.companyName || 'InvoiceFlow');
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@getinvoiceflow.fun';
   await sendEmail({
     to,
     subject: `Payment received - Thank you!`,

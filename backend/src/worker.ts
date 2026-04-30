@@ -105,7 +105,7 @@ webhookWorker.on('failed', (job, err) => {
 
 // ── Heartbeat ─────────────────────────────────────────────────────────────────
 
-const HEARTBEAT_KEY = 'stripeflow:worker:heartbeat';
+const HEARTBEAT_KEY = 'InvoiceFlow:worker:heartbeat';
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
 const writeHeartbeat = () =>
@@ -132,7 +132,7 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-logger.info('StripeFlow Worker — started (BullMQ + Redis)');
+logger.info('InvoiceFlow Worker — started (BullMQ + Redis)');
 writeHeartbeat();
 heartbeatHandle = setInterval(writeHeartbeat, HEARTBEAT_INTERVAL_MS);
 

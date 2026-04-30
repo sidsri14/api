@@ -49,7 +49,7 @@ const SecretBanner: FC<{ item: NewSecret; onDismiss: () => void }> = ({ item, on
             Signing secret — save this now. It will not be shown again.
           </p>
           <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-            Use this to verify the <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 py-0.5 rounded">x-stripeflow-signature</code> header on incoming webhook deliveries.
+            Use this to verify the <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 py-0.5 rounded">x-InvoiceFlow-signature</code> header on incoming webhook deliveries.
           </p>
         </div>
         <button onClick={onDismiss} className="text-amber-500 hover:text-amber-700 text-xs font-bold shrink-0">Dismiss</button>
@@ -110,7 +110,7 @@ const AddForm: FC<{ onClose: () => void; onCreated: (ep: WebhookEndpoint & { sec
           <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Endpoint URL</label>
           <input
             type="url"
-            placeholder="https://your-server.com/webhooks/stripeflow"
+            placeholder="https://your-server.com/webhooks/InvoiceFlow"
             value={url}
             onChange={e => setUrl(e.target.value)}
             required
@@ -365,7 +365,7 @@ const Webhooks: FC = () => {
       <SettingsNav />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black text-stone-900 dark:text-white tracking-tight">StripeFlow Webhooks</h1>
+          <h1 className="text-4xl font-black text-stone-900 dark:text-white tracking-tight">InvoiceFlow Webhooks</h1>
           <p className="text-stone-400 mt-2 font-medium">
             Get real-time notifications on your server when payment events occur.
           </p>
@@ -400,7 +400,7 @@ const Webhooks: FC = () => {
       {/* How it works */}
       <div className="border border-stone-100 dark:border-stone-800 rounded-2xl p-5 bg-stone-50/50 dark:bg-stone-900/30 text-xs text-stone-500 dark:text-stone-400 space-y-2">
         <p className="font-bold text-stone-700 dark:text-stone-300 text-sm">Verifying webhook signatures</p>
-        <p>Each delivery includes an <code className="font-mono bg-stone-100 dark:bg-stone-800 px-1 py-0.5 rounded">x-stripeflow-signature: sha256=&lt;hex&gt;</code> header.</p>
+        <p>Each delivery includes an <code className="font-mono bg-stone-100 dark:bg-stone-800 px-1 py-0.5 rounded">x-InvoiceFlow-signature: sha256=&lt;hex&gt;</code> header.</p>
         <p>Compute <code className="font-mono bg-stone-100 dark:bg-stone-800 px-1 py-0.5 rounded">HMAC-SHA256(secret, rawBody)</code> and compare — reject if they don't match.</p>
       </div>
 
@@ -438,7 +438,7 @@ const Webhooks: FC = () => {
         onConfirm={() => endpointToDelete && deleteMutation.mutate(endpointToDelete)}
         loading={deleteMutation.isPending}
         title="Remove Endpoint?"
-        message="StripeFlow will stop sending events to this URL. You can re-add it at any time."
+        message="InvoiceFlow will stop sending events to this URL. You can re-add it at any time."
         confirmText="Remove"
         isDestructive
       />

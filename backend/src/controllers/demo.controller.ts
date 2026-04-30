@@ -67,12 +67,12 @@ export class DemoController {
       }
 
       // 1. Get or create a Demo User
-      let user = await prisma.user.findFirst({ where: { email: 'demo@stripeflow.app' } });
+      let user = await prisma.user.findFirst({ where: { email: 'demo@getinvoiceflow.fun' } });
       if (!user) {
         user = await prisma.user.create({
           data: {
-            email: 'demo@stripeflow.app',
-            name: 'StripeFlow Demo',
+            email: 'demo@getinvoiceflow.fun',
+            name: 'InvoiceFlow Demo',
             plan: 'free',
           }
         });
@@ -134,7 +134,7 @@ export class DemoController {
       let emailSent = false;
       try {
         await sendInvoiceEmail(clientEmail, pdfUrl, checkoutUrl!, invoice, {
-          companyName: 'StripeFlow Demo',
+          companyName: 'InvoiceFlow Demo',
           accentColor: '#10b981',
         });
         emailSent = true;

@@ -179,7 +179,7 @@ const Settings: FC<Props> = ({ user, onUpdateUser }) => {
             </ul>
             {user.plan !== 'free' && (
               <a
-                href="mailto:support@stripeflow.app?subject=Cancel%20subscription"
+                href="mailto:support@InvoiceFlow.app?subject=Cancel%20subscription"
                 className="block w-full py-2.5 rounded-xl border border-warm-border dark:border-stone-700 text-stone-500 dark:text-stone-400 font-semibold text-sm text-center hover:bg-white dark:hover:bg-stone-800 transition-all opacity-60 hover:opacity-100"
               >
                 Contact support to cancel

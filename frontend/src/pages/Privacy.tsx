@@ -25,7 +25,7 @@ const Privacy = () => {
             <h2 className="text-xl font-black text-stone-800 dark:text-stone-100 uppercase tracking-widest">Data Processor Role</h2>
           </div>
           <p>
-            StripeFlow operates as a <strong className="text-stone-900 dark:text-stone-100">Data Processor</strong> under GDPR and other global privacy frameworks. We process customer PII (including names and email addresses) solely at the direction of the Merchant (Data Controller) for the purpose of facilitating payment recovery.
+            InvoiceFlow operates as a <strong className="text-stone-900 dark:text-stone-100">Data Processor</strong> under GDPR and other global privacy frameworks. We process customer PII (including names and email addresses) solely at the direction of the Merchant (Data Controller) for the purpose of facilitating payment recovery.
           </p>
         </section>
 

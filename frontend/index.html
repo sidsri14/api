@@ -4,35 +4,72 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StripeFlow | Create invoices. Get paid faster.</title>
+    <title>InvoiceFlow | Create invoices. Get paid faster.</title>
 
     <!-- Primary Meta Tags -->
-    <meta name="title" content="StripeFlow | Create invoices. Get paid faster." />
+    <meta name="title" content="InvoiceFlow | Create invoices. Get paid faster." />
     <meta name="description" content="Global freelance invoicing with automatic email reminders. Create an invoice in seconds, send a Stripe payment link, get paid." />
     <meta name="keywords" content="invoicing, stripe checkout, automatic reminders, freelancer billing, pdf invoices, get paid faster" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://stripeflow.app/" />
-    <meta property="og:title" content="StripeFlow | Create invoices. Get paid faster." />
+    <meta property="og:url" content="https://getinvoiceflow.fun/" />
+    <meta property="og:title" content="InvoiceFlow | Create invoices. Get paid faster." />
     <meta property="og:description" content="Global freelance invoicing with automatic email reminders. No chasing. No bullshit." />
-    <meta property="og:image" content="https://stripeflow.app/og-image.png" />
+    <meta property="og:image" content="https://getinvoiceflow.fun/og-image.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://stripeflow.app/" />
-    <meta property="twitter:title" content="StripeFlow | Create invoices. Get paid faster." />
+    <meta property="twitter:url" content="https://getinvoiceflow.fun/" />
+    <meta property="twitter:title" content="InvoiceFlow | Create invoices. Get paid faster." />
     <meta property="twitter:description" content="Global freelance invoicing with automatic email reminders. No chasing. No bullshit." />
-    <meta property="twitter:image" content="https://stripeflow.app/og-image.png" />
+    <meta property="twitter:image" content="https://getinvoiceflow.fun/og-image.png" />
     
     <meta name="theme-color" content="#10b981" />
+    <style>
+      /* Critical CSS for static landing */
+      body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; }
+      .mesh-bg { background: radial-gradient(at 0% 0%, hsla(161, 68%, 88%, 1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(210, 100%, 95%, 1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(270, 100%, 95%, 1) 0, transparent 50%); background-color: #fff; }
+      .font-black { font-weight: 900; }
+      .tracking-tighter { letter-spacing: -0.05em; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static Hydration Fallback (No-JS/SEO) -->
+      <div class="mesh-bg min-h-screen">
+        <nav style="position:fixed; top:0; width:100%; z-index:50; background:rgba(255,255,255,0.7); backdrop-filter:blur(24px); border-bottom:1px solid rgba(0,0,0,0.05); height:96px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; box-sizing:border-box;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:#0f172a; padding:10px; border-radius:16px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <span style="font-weight:900; font-size:24px; letter-spacing:-0.05em; color:#0f172a; text-transform:uppercase;">InvoiceFlow</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <a href="/login" style="font-weight:700; font-size:14px; color:#475569; text-decoration:none;">Sign In</a>
+            <a href="/register" style="background:#10b981; color:white; padding:12px 24px; border-radius:12px; font-weight:700; font-size:14px; text-decoration:none; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);">Start Free</a>
+          </div>
+        </nav>
+        <main style="padding-top:176px; text-align:center; padding-left:24px; padding-right:24px;">
+          <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 24px; border-radius:9999px; background:white; border:1px solid #e2e8f0; color:#059669; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:48px;">
+            Invoice. Send. Get Paid. Automatically.
+          </div>
+          <h1 style="font-size: clamp(3rem, 8vw, 8rem); font-weight:900; letter-spacing:-0.05em; line-height:0.85; margin-bottom:32px; color:#0f172a;">
+            Create invoice.<br><span style="color:#10b981;">Get paid faster.</span>
+          </h1>
+          <p style="max-width:640px; margin:0 auto; color:#64748b; font-size:1.25rem; font-weight:500; line-height:1.6; margin-bottom:48px;">
+            Global freelance invoicing with automatic email reminders. No chasing. No bullshit. $19/mo.
+          </p>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:24px;">
+            <a href="/register" style="background:#10b981; color:white; padding:24px 48px; border-radius:16px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; font-size:13px; text-decoration:none; box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25);">Start for Free</a>
+          </div>
+        </main>
+      </div>
+    </div>
     <noscript>
       <div style="font-family:sans-serif;text-align:center;padding:4rem">
         <h1>JavaScript required</h1>
-        <p>StripeFlow requires JavaScript to run. Please enable it in your browser settings.</p>
+        <p>InvoiceFlow requires JavaScript to run. Please enable it in your browser settings.</p>
       </div>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>

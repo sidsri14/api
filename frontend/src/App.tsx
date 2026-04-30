@@ -155,7 +155,7 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl tracking-tight text-stone-800 dark:text-stone-100 hidden sm:block">
-            StripeFlow
+            InvoiceFlow
           </span>
         </div>
 
@@ -213,7 +213,7 @@ const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = ({ children, user
 
     <footer className="p-8 border-t border-warm-border dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl mx-auto w-full">
       <p className="text-xs font-medium text-stone-400 tracking-wide">
-        &copy; 2026 StripeFlow
+        &copy; 2026 InvoiceFlow
       </p>
       <div className="flex gap-6 text-xs font-medium text-stone-400">
         <Link to="/terms" className="hover:text-stone-600 dark:hover:text-stone-300 transition-colors">Terms</Link>
@@ -231,21 +231,21 @@ function PageTitle() {
   const location = useLocation();
   useEffect(() => {
     const titles: Record<string, string> = {
-      '/': 'StripeFlow | Create invoices. Get paid faster.',
-      '/dashboard': 'Dashboard | StripeFlow',
-      '/login': 'Sign In | StripeFlow',
-      '/register': 'Create Account | StripeFlow',
-      '/invoices': 'Invoices | StripeFlow',
-      '/clients': 'Clients | StripeFlow',
-      '/demo': 'Live Demo | StripeFlow',
-      '/settings': 'Settings | StripeFlow',
-      '/branding': 'Branding | StripeFlow',
-      '/security': 'Security | StripeFlow',
-      '/forgot-password': 'Reset Password | StripeFlow',
-      '/reset-password': 'New Password | StripeFlow',
-      '/verify-email': 'Verify Account | StripeFlow',
+      '/': 'InvoiceFlow | Create invoices. Get paid faster.',
+      '/dashboard': 'Dashboard | InvoiceFlow',
+      '/login': 'Sign In | InvoiceFlow',
+      '/register': 'Create Account | InvoiceFlow',
+      '/invoices': 'Invoices | InvoiceFlow',
+      '/clients': 'Clients | InvoiceFlow',
+      '/demo': 'Live Demo | InvoiceFlow',
+      '/settings': 'Settings | InvoiceFlow',
+      '/branding': 'Branding | InvoiceFlow',
+      '/security': 'Security | InvoiceFlow',
+      '/forgot-password': 'Reset Password | InvoiceFlow',
+      '/reset-password': 'New Password | InvoiceFlow',
+      '/verify-email': 'Verify Account | InvoiceFlow',
     };
-    document.title = titles[location.pathname] || 'StripeFlow | Create invoices. Get paid faster.';
+    document.title = titles[location.pathname] || 'InvoiceFlow | Create invoices. Get paid faster.';
   }, [location.pathname]);
   return null;
 }

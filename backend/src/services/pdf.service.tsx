@@ -48,7 +48,7 @@ function InvoiceDocument({ invoice }: { invoice: InvoiceForPDF }) {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.companyName}>{invoice.user.name ?? 'StripeFlow'}</Text>
+            <Text style={styles.companyName}>{invoice.user.name ?? 'InvoiceFlow'}</Text>
           </View>
           <View>
             <Text style={styles.invoiceLabel}>INVOICE</Text>

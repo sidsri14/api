@@ -297,7 +297,7 @@ const Branding: FC<Props> = ({ user, onUpdateUser }) => {
                 <h5 className="text-xs font-bold text-stone-800 dark:text-white uppercase tracking-widest">Premium Features</h5>
               </div>
               <ul className="space-y-3">
-                {['Custom Domains', 'No StripeFlow Branding', 'Rich HTML Templates'].map(f => (
+                {['Custom Domains', 'No InvoiceFlow Branding', 'Rich HTML Templates'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     {f}

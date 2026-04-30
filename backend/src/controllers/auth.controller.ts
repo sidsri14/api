@@ -212,9 +212,9 @@ export const sendTestEmail = async (req: AuthRequest, res: Response, next: NextF
 };
 
 export const sendTestSms = async (_req: AuthRequest, res: Response) => {
-  return errorResponse(res, 'SMS is not available in StripeFlow', 501);
+  return errorResponse(res, 'SMS is not available in InvoiceFlow', 501);
 };
 
 export const sendTestWhatsApp = async (_req: AuthRequest, res: Response) => {
-  return errorResponse(res, 'WhatsApp is not available in StripeFlow', 501);
+  return errorResponse(res, 'WhatsApp is not available in InvoiceFlow', 501);
 };

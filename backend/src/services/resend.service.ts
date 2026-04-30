@@ -32,7 +32,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   }
 
   const { error } = await resend.emails.send({
-    from: params.from ?? process.env.RESEND_FROM ?? 'StripeFlow <noreply@stripeflow.app>',
+    from: params.from ?? process.env.RESEND_FROM ?? 'InvoiceFlow <noreply@InvoiceFlow.app>',
     to: params.to,
     subject: params.subject,
     html: params.html,

@@ -209,7 +209,7 @@ const ApiKeys: FC = () => {
         <div>
           <h1 className="text-4xl font-black text-stone-900 dark:text-white tracking-tighter">API Keys</h1>
           <p className="text-stone-400 mt-2 font-medium">
-            Authenticate programmatic requests to the StripeFlow API from your server.
+            Authenticate programmatic requests to the InvoiceFlow API from your server.
           </p>
         </div>
         <button
@@ -259,7 +259,7 @@ const ApiKeys: FC = () => {
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">No API keys</h3>
             <p className="text-stone-400 text-sm max-w-sm mx-auto font-medium">
-              Create an API key to make authenticated requests to the StripeFlow API from your server.
+              Create an API key to make authenticated requests to the InvoiceFlow API from your server.
             </p>
           </div>
         </div>

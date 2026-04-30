@@ -133,7 +133,7 @@ export const testEndpoint = async (req: AuthRequest, res: Response, next: NextFu
 
     const payload = JSON.stringify({
       event: 'ping',
-      data: { message: 'This is a test delivery from StripeFlow.' },
+      data: { message: 'This is a test delivery from InvoiceFlow.' },
       timestamp: new Date().toISOString(),
     });
     const sig = `sha256=${crypto.createHmac('sha256', ep.secret).update(payload).digest('hex')}`;
@@ -145,8 +145,8 @@ export const testEndpoint = async (req: AuthRequest, res: Response, next: NextFu
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-stripeflow-signature': sig,
-          'x-stripeflow-event': 'ping',
+          'x-InvoiceFlow-signature': sig,
+          'x-InvoiceFlow-event': 'ping',
         },
         body: payload,
         signal: controller.signal,

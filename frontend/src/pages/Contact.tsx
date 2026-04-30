@@ -53,8 +53,8 @@ const Contact = () => {
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Direct Support</p>
-                <a href="mailto:support@stripeflow.com" className="text-lg font-bold text-stone-800 dark:text-stone-100 hover:text-emerald-500 transition-colors">
-                  support@stripeflow.com
+                <a href="mailto:support@InvoiceFlow.com" className="text-lg font-bold text-stone-800 dark:text-stone-100 hover:text-emerald-500 transition-colors">
+                  support@InvoiceFlow.com
                 </a>
               </div>
             </div>

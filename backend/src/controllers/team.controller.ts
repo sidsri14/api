@@ -172,8 +172,8 @@ export const inviteUser = async (req: AuthRequest, res: Response, next: NextFunc
     const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard`;
     void sendEmail({
       to: userToInvite.email,
-      subject: `You've been invited to join ${newMember.organization.name} on StripeFlow`,
-      html: `<h2>Team Invitation</h2><p><strong>${esc(inviter?.name || 'A teammate')}</strong> has invited you to join <strong>${esc(newMember.organization.name)}</strong> on StripeFlow.</p><p><a href="${inviteLink}" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;">Go to Dashboard</a></p>`,
+      subject: `You've been invited to join ${newMember.organization.name} on InvoiceFlow`,
+      html: `<h2>Team Invitation</h2><p><strong>${esc(inviter?.name || 'A teammate')}</strong> has invited you to join <strong>${esc(newMember.organization.name)}</strong> on InvoiceFlow.</p><p><a href="${inviteLink}" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;">Go to Dashboard</a></p>`,
     }).catch((err: unknown) => console.error('[InviteEmail] Failed to send:', err));
 
     void logAuditAction(req.userId!, 'TEAM_INVITE', 'Organization', orgId, { invitedEmail: email, role });

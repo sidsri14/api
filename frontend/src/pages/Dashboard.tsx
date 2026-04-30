@@ -237,7 +237,7 @@ const Dashboard: FC<{ user: AuthUser }> = ({ user }) => {
               </div>
               <div className="space-y-1">
                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Silence is Golden</h3>
-                 <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-400/80 mb-0.5">StripeFlow Core</p>
+                 <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-400/80 mb-0.5">InvoiceFlow Core</p>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No matching records found in this sequence</p>
               </div>
             </div>

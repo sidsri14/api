@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://stripeflow-production.up.railway.app/api/:path*"
+      "destination": "https://InvoiceFlow-production.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",

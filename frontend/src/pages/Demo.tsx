@@ -113,7 +113,7 @@ const Demo: FC = () => {
             <div className="bg-stone-800 p-2 rounded-lg">
               <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-stone-800 uppercase tracking-widest text-xs">StripeFlow Demo Generator</span>
+            <span className="font-bold text-stone-800 uppercase tracking-widest text-xs">InvoiceFlow Demo Generator</span>
           </div>
 
           <motion.div
@@ -184,7 +184,7 @@ const Demo: FC = () => {
            <div className="bg-stone-800 p-2 rounded-lg">
              <CheckCircle2 className="w-4 h-4 text-white" />
            </div>
-           <span className="font-bold text-stone-800 uppercase tracking-widest text-xs">StripeFlow Secure Payment</span>
+           <span className="font-bold text-stone-800 uppercase tracking-widest text-xs">InvoiceFlow Secure Payment</span>
         </div>
 
         <motion.div
@@ -275,7 +275,7 @@ const Demo: FC = () => {
         </motion.div>
 
         <p className="text-center text-[10px] uppercase font-bold tracking-widest text-stone-400">
-          Powered by StripeFlow &middot; Instant Freelancer Invoicing
+          Powered by InvoiceFlow &middot; Instant Freelancer Invoicing
         </p>
       </div>
     </div>

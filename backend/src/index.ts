@@ -54,7 +54,7 @@ function validateEnv(): void {
 validateEnv();
 
 const server = app.listen(port, () => {
-  console.log(`StripeFlow server running on port ${port}`);
+  console.log(`InvoiceFlow server running on port ${port}`);
 });
 
 // ── Graceful Shutdown

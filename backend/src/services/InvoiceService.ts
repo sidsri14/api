@@ -19,6 +19,14 @@ export class InvoiceService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
+    // Free tier limit enforcement (3 invoices)
+    if (user.plan === 'free') {
+      const invoiceCount = await prisma.invoice.count({ where: { userId } });
+      if (invoiceCount >= 3) {
+        throw new Error('You have reached the free tier limit of 3 invoices. Please upgrade to Pro for unlimited invoicing.');
+      }
+    }
+
     // 1. Resolve or create client
     let client = null;
     if (data.clientId) {

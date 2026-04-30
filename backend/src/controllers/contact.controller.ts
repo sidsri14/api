@@ -14,7 +14,7 @@ export const submitContact = async (req: Request, res: Response, next: NextFunct
       await sendEmail({
         to,
         // Subject is plain text — do NOT HTML-escape it (produces literal &amp; etc. in inbox)
-        subject: `[StripeFlow Contact] Message from ${name}`,
+        subject: `[InvoiceFlow Contact] Message from ${name}`,
         html: `<p><strong>Name:</strong> ${esc(name)}</p><p><strong>Email:</strong> ${esc(email)}</p><p><strong>Message:</strong><br/>${esc(message).replace(/\n/g, '<br/>')}</p>`,
       });
     } else {

@@ -1,6 +1,6 @@
 import { sendEmail } from './resend.service.js';
 
-const APP_NAME = 'StripeFlow';
+const APP_NAME = 'InvoiceFlow';
 
 export async function sendEmailVerificationEmail(
   email: string,

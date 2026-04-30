@@ -33,7 +33,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ onClose, onUpgrade, 
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider opacity-80">StripeFlow Pro</span>
+                <span className="text-xs font-bold uppercase tracking-wider opacity-80">InvoiceFlow Pro</span>
               </div>
               <h2 id="upgrade-title" className="text-2xl font-black">Start recovering money today</h2>
               <p className="text-emerald-100 text-sm mt-1">Auto-recovery works while you sleep.</p>
