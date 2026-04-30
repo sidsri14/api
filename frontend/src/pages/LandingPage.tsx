@@ -87,7 +87,7 @@ const LandingPage: FC = () => {
                 transition={{ delay: 0.3 }}
                 className="max-w-2xl mx-auto text-slate-500 dark:text-slate-400 text-lg md:text-xl font-medium leading-relaxed"
               >
-                Stop chasing clients. Start getting paid. Automatic reminders, branded PDFs, and Stripe checkout. One flat rate: $19/mo.
+                Stop chasing clients. Start getting paid. Automatic reminders, branded PDFs, and Stripe checkout. All for $19/mo.
               </motion.p>
             </motion.div>
 

@@ -17,7 +17,6 @@ const Demo: FC = () => {
   useEffect(() => {
     const fetchInvoice = async () => {
       if (!invoiceId) {
-        setError('No invoice ID provided.');
         setLoading(false);
         return;
       }
@@ -25,7 +24,9 @@ const Demo: FC = () => {
         const { data } = await api.get(`/demo/invoice/${invoiceId}`);
         setInvoice(data.data);
       } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to load invoice.');
+        if (invoiceId) {
+          setError(err.response?.data?.error || 'Failed to load invoice.');
+        }
       } finally {
         setLoading(false);
       }
@@ -160,7 +161,7 @@ const Demo: FC = () => {
                 {creating ? 'Generating Flow...' : (
                   <>
                     <Sparkles className="w-6 h-6" />
-                    Create Test Invoice & Get Link
+                    Create Test Invoice & Send Email
                   </>
                 )}
               </button>
