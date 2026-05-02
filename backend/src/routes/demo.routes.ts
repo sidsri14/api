@@ -14,6 +14,7 @@ const demoLimiter = rateLimit({
 const router = Router();
 
 router.get('/invoice/:id', demoLimiter, DemoController.getInvoice);
+router.get('/invoice/:id/pdf', demoLimiter, DemoController.getInvoicePdf);
 router.post('/pay/:id', demoLimiter, DemoController.payInvoice);
 router.post('/create', demoLimiter, DemoController.createDemoInvoice);
 

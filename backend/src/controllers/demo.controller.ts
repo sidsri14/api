@@ -58,6 +58,25 @@ export class DemoController {
     }
   }
 
+  static async getInvoicePdf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = String(req.params.id);
+      const invoice = await prisma.invoice.findUnique({
+        where: { id },
+        include: { client: true, user: true, items: true },
+      });
+
+      if (!invoice) return errorResponse(res, 'Invoice not found', 404);
+
+      const pdf = await generateInvoicePDF(invoice as any);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.number}.pdf"`);
+      return res.send(pdf);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createDemoInvoice(req: Request, res: Response, next: NextFunction) {
     try {
       const { amount, clientEmail, description, dueDate } = req.body;
@@ -115,7 +134,16 @@ export class DemoController {
       });
 
       // 4. Generate Stripe Session
-      const { checkoutUrl } = await StripeBillingService.createInvoiceSession(invoice, user);
+      const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+      const successUrl = `${frontendBase}/demo?id=${invoice.id}&status=paid`;
+      const cancelUrl = `${frontendBase}/demo?id=${invoice.id}&status=cancelled`;
+
+      const { checkoutUrl } = await StripeBillingService.createInvoiceSession(
+        invoice, 
+        user,
+        successUrl,
+        cancelUrl
+      );
       
       // Update invoice with the link
       await prisma.invoice.update({
